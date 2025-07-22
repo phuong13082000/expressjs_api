@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        default: ""
+        default: null
     },
     mobile: {
         type: Number,
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     },
     refresh_token: {
         type: String,
-        default: ""
+        default: null
     },
     verify_email: {
         type: Boolean,
@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
     },
     last_login_date: {
         type: Date,
-        default: ""
+        default: null
     },
     status: {
         type: String,

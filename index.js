@@ -10,6 +10,7 @@ import {fileURLToPath} from "url"
 import connectDb from "./configs/connectDb.js";
 import userRouter from "./routes/user.route.js";
 import categoryRouter from "./routes/category.route.js";
+import addressRouter from "./routes/address.route.js";
 
 dotenv.config();
 
@@ -20,10 +21,10 @@ app.use(cors({
     credentials: true,
     origin: process.env.FRONTEND_URL,
 }))
-app.use(express.json()) //limit: '10kb'
+app.use(express.json()) // limit: '10kb'
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
-app.use(morgan('dev')) //combined > common > dev > short
+app.use(morgan('dev')) // combined > common > dev > short
 app.use(helmet({
     crossOriginResourcePolicy: false,
     // hidePoweredBy: false,
@@ -39,12 +40,11 @@ app.get("/", (req, res) => {
     })
 })
 app.use('/api/v1/user', userRouter)
+app.use("/api/v1/address", addressRouter)
 app.use("/api/v1/category", categoryRouter)
 // app.use("/api/v1/file", uploadRouter)
-// app.use("/api/v1/subcategory", subCategoryRouter)
 // app.use("/api/v1/product", productRouter)
 // app.use("/api/v1/cart", cartRouter)
-// app.use("/api/v1/address", addressRouter)
 // app.use('/api/v1/order', orderRouter)
 
 connectDb().then(() => {
