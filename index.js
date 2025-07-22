@@ -8,6 +8,7 @@ import path from "path"
 import {fileURLToPath} from "url"
 
 import connectDb from "./configs/connectDb.js";
+import userRouter from "./routes/user.route.js";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(cors({
     origin: process.env.FRONTEND_URL,
 }))
 app.use(express.json()) //limit: '10kb'
+app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(morgan('dev')) //combined > common > dev > short
 app.use(helmet({
@@ -35,7 +37,7 @@ app.get("/", (req, res) => {
         message: "Server running on http://localhost:" + port,
     })
 })
-// app.use('/api/v1/user', userRouter)
+app.use('/api/v1/user', userRouter)
 // app.use("/api/v1/category", categoryRouter)
 // app.use("/api/v1/file", uploadRouter)
 // app.use("/api/v1/subcategory", subCategoryRouter)

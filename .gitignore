@@ -131,3 +131,4 @@ dist
 
 .idea/
 yarn.lock
+public/
