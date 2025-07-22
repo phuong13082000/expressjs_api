@@ -3,9 +3,8 @@ import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 import UserModel from '../models/user.model.js'
-import {generatedAccessToken} from '../utils/generatedAccessToken.js'
-import {generatedRefreshToken} from '../utils/generatedRefreshToken.js'
 import {saveImage} from "../utils/uploadImageLocal.js";
+import {generatedAccessToken, generatedRefreshToken} from "../utils/generatedToken.js";
 
 dotenv.config();
 
