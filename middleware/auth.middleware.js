@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 
 dotenv.config();
 
-const auth = async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     try {
         const token = req.cookies.accessToken || req?.headers?.authorization?.split(" ")[1]
 
@@ -47,4 +47,4 @@ const auth = async (req, res, next) => {
     }
 }
 
-export default auth
+export default authMiddleware

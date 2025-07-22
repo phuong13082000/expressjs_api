@@ -1,6 +1,6 @@
 import UserModel from "../models/user.model.js"
 
-const admin = async (request, response, next) => {
+const adminMiddleware = async (request, response, next) => {
     try {
         const userId = request.userId
 
@@ -22,4 +22,4 @@ const admin = async (request, response, next) => {
     }
 }
 
-export default admin
+export default adminMiddleware

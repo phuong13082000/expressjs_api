@@ -13,13 +13,6 @@ export async function registerController(req, res) {
     try {
         const {name, email, password} = req.body
 
-        if (!name || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Provide email, name, password",
-            })
-        }
-
         const user = await UserModel.findOne({email})
 
         if (user) {
@@ -40,6 +33,15 @@ export async function registerController(req, res) {
 
         const newUser = new UserModel(payload)
         const save = await newUser.save()
+
+        // await sendEmail({
+        //     sendTo: email,
+        //     subject: "Verify email",
+        //     html: verifyEmailTemplate({
+        //         name,
+        //         url: `${process.env.FRONTEND_URL}/verify-email?code=${save?._id}`
+        //     })
+        // })
 
         return res.json({
             success: true,
@@ -85,13 +87,6 @@ export async function loginController(req, res) {
     try {
         const {email, password} = req.body
 
-        if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Email and password are required",
-            })
-        }
-
         const user = await UserModel.findOne({email})
 
         if (!user) {
@@ -134,7 +129,7 @@ export async function loginController(req, res) {
         return res.json({
             success: true,
             data: {
-                accessToken: accessToken
+                token: accessToken
             },
             message: "Login successfully",
         })
@@ -185,7 +180,6 @@ export async function uploadAvatar(req, res) {
         return res.json({
             success: true,
             data: {
-                idUser: userId,
                 image: upload
             },
             message: "upload profile",
@@ -210,7 +204,7 @@ export async function updateDetails(req, res) {
             hashPassword = await bcryptjs.hash(password, salt)
         }
 
-        const updateUser = await UserModel.updateOne({_id: userId}, {
+        await UserModel.updateOne({_id: userId}, {
             ...(name && {name: name}),
             ...(email && {email: email}),
             ...(mobile && {mobile: mobile}),
@@ -219,7 +213,6 @@ export async function updateDetails(req, res) {
 
         return res.json({
             success: true,
-            data: updateUser,
             message: "Updated successfully",
         })
     } catch (error) {
@@ -243,7 +236,7 @@ export async function forgotPasswordController(req, res) {
             })
         }
 
-        const otp = generatedOtp()
+        const otp = Math.floor(Math.random() * 900000) + 100000 // 100.000 to 999.999
         const expireTime = new Date() + 60 * 60 * 1000 // 1hr
 
         await UserModel.findByIdAndUpdate(user._id, {
@@ -251,14 +244,14 @@ export async function forgotPasswordController(req, res) {
             forgot_password_expiry: new Date(expireTime).toISOString()
         })
 
-        await sendEmail({
-            sendTo: email,
-            subject: "Forgot password from @@",
-            html: forgotPasswordTemplate({
-                name: user.name,
-                otp: otp
-            })
-        })
+        // await sendEmail({
+        //     sendTo: email,
+        //     subject: "Forgot password",
+        //     html: forgotPasswordTemplate({
+        //         name: user.name,
+        //         otp: otp
+        //     })
+        // })
 
         return res.json({
             success: true,
@@ -331,7 +324,7 @@ export async function resetPassword(req, res) {
 
         if (!email || !newPassword || !confirmPassword) {
             return res.status(400).json({
-                message: "provide required fields email, newPassword, confirmPassword"
+                message: "provide required fields email, new password, confirm password"
             })
         }
 
@@ -347,7 +340,7 @@ export async function resetPassword(req, res) {
         if (newPassword !== confirmPassword) {
             return res.status(400).json({
                 success: false,
-                message: "newPassword and confirmPassword must be same.",
+                message: "new password and confirm password must be same.",
             })
         }
 
@@ -428,7 +421,7 @@ export async function userDetails(req, res) {
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: "Something is wrong",
+            message: error.message || error,
         })
     }
 }
