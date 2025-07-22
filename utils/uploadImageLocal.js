@@ -18,10 +18,10 @@ const upload = multer({
     }
 });
 
-export const saveImage = (file) => {
+export const saveImage = (file, folder = 'images') => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
-    const dirPath = path.join(path.dirname(fileURLToPath(import.meta.url)), `../public/images`);
+    const dirPath = path.join(path.dirname(fileURLToPath(import.meta.url)), `../public/${folder}`);
     const filePath = path.join(dirPath, filename);
 
     if (!fs.existsSync(dirPath)) {
@@ -30,7 +30,7 @@ export const saveImage = (file) => {
 
     fs.writeFileSync(filePath, file.buffer);
 
-    return `${process.env.SERVER_URL}/images/${filename}`;
+    return `${process.env.SERVER_URL}/${folder}/${filename}`;
 }
 
 export const uploadMiddlewareAvatar = upload.single("avatar");

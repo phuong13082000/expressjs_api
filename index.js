@@ -9,6 +9,7 @@ import {fileURLToPath} from "url"
 
 import connectDb from "./configs/connectDb.js";
 import userRouter from "./routes/user.route.js";
+import categoryRouter from "./routes/category.route.js";
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ app.get("/", (req, res) => {
     })
 })
 app.use('/api/v1/user', userRouter)
-// app.use("/api/v1/category", categoryRouter)
+app.use("/api/v1/category", categoryRouter)
 // app.use("/api/v1/file", uploadRouter)
 // app.use("/api/v1/subcategory", subCategoryRouter)
 // app.use("/api/v1/product", productRouter)
