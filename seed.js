@@ -71,7 +71,6 @@ const seedCategories = async () => {
             },
             {
                 name: "Fitness & Health",
-                color: "#FF9AA2",
                 slug: "fitness-health",
                 subcategories: [
                     { name: "Workout Plans", slug: "workout-plans" },
@@ -140,7 +139,7 @@ const seedCategories = async () => {
             }
         }
 
-        console.log("seed successfully created");
+        console.log("seed category successfully created");
     } catch (err) {
         console.error("error seed:", err);
     } finally {
