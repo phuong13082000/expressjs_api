@@ -1,6 +1,7 @@
 import CategoryModel from "../models/category.model.js";
+import ProductModel from "../models/product.model.js";
 
-export const AddCategoryController = async (req, res) => {
+export const addCategoryController = async (req, res) => {
     try {
         const {name, slug, image, parent} = req.body
 
@@ -11,11 +12,10 @@ export const AddCategoryController = async (req, res) => {
             parent,
         })
 
-        const saveCategory = await addCategory.save()
+        await addCategory.save()
 
         return res.json({
             success: true,
-            data: saveCategory,
             message: "Add Category"
         })
     } catch (error) {
@@ -30,7 +30,7 @@ export const getCategoryController = async (req, res) => {
     try {
         const data = await CategoryModel.aggregate([
             {
-                $match: { parent: null },
+                $match: {parent: null},
             },
             {
                 $lookup: {
@@ -41,7 +41,7 @@ export const getCategoryController = async (req, res) => {
                 }
             },
             {
-                $sort: { createdAt: -1 }
+                $sort: {createdAt: -1}
             },
             {
                 $project: {
@@ -101,12 +101,11 @@ export const deleteCategoryController = async (req, res) => {
     try {
         const {_id} = req.body
 
-        const checkSubCategory = await CategoryModel.countDocuments({ parent: _id });
+        const checkSubCategory = await CategoryModel.countDocuments({parent: _id});
 
-        // const checkProduct = await ProductModel.countDocuments({ category: _id });
+        const checkProduct = await ProductModel.countDocuments({category: _id});
 
-        // if (checkSubCategory > 0 || checkProduct > 0) {
-        if (checkSubCategory > 0) {
+        if (checkSubCategory > 0 || checkProduct > 0) {
             return res.status(400).json({
                 success: false,
                 message: "Category is already use can't delete",

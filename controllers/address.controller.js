@@ -4,8 +4,7 @@ import UserModel from "../models/user.model.js";
 export const getAddressController = async (req, res) => {
     try {
         const userId = req.userId
-        const data = await AddressModel.find({userId: userId})
-            .sort({createdAt: -1})
+        const data = await AddressModel.find({userId: userId}).sort({createdAt: -1})
 
         return res.json({
             success: true,
@@ -23,10 +22,10 @@ export const getAddressController = async (req, res) => {
 export const addAddressController = async (req, res) => {
     try {
         const userId = req.userId
-        const {address_line, city, state, pinCode, country, mobile} = req.body
+        const {addressLine, city, state, pinCode, country, mobile} = req.body
 
         const createAddress = new AddressModel({
-            address_line,
+            addressLine,
             city,
             state,
             country,
@@ -57,10 +56,10 @@ export const addAddressController = async (req, res) => {
 export const updateAddressController = async (req, res) => {
     try {
         const userId = req.userId
-        const {_id, address_line, city, state, country, pinCode, mobile} = req.body
+        const {_id, addressLine, city, state, country, pinCode, mobile} = req.body
 
         await AddressModel.updateOne({_id: _id, userId: userId}, {
-            address_line,
+            addressLine,
             city,
             state,
             country,

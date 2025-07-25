@@ -1,6 +1,7 @@
 import {Router} from 'express'
 import {
     forgotPasswordController,
+    googleLogin,
     loginController,
     logoutController,
     refreshToken,
@@ -19,13 +20,14 @@ import {loginSchema, registerSchema} from "../schemas/user.schema.js";
 
 const userRouter = Router()
 
-userRouter.get('/logout', authMiddleware, logoutController)
 userRouter.get('/user-details', authMiddleware, userDetails)
 
 userRouter.post('/register', validateMiddleware(registerSchema), registerController)
 userRouter.post('/verify-email', verifyEmailController)
 userRouter.post('/login', validateMiddleware(loginSchema), loginController)
 userRouter.post('/refresh-token', refreshToken)
+userRouter.post('/login-google', googleLogin)
+userRouter.post('/logout', authMiddleware, logoutController)
 
 userRouter.put('/upload-avatar', authMiddleware, uploadMiddlewareAvatar, uploadAvatar)
 userRouter.put('/update-user', authMiddleware, updateDetails)

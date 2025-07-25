@@ -12,7 +12,14 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "provide password"]
+        required: function () {
+            return this.provider !== 'google';
+        }
+    },
+    provider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local',
     },
     avatar: {
         type: String,
@@ -22,15 +29,15 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: null
     },
-    refresh_token: {
+    refreshToken: {
         type: String,
         default: null
     },
-    verify_email: {
+    verifyEmail: {
         type: Boolean,
         default: false
     },
-    last_login_date: {
+    lastLoginDate: {
         type: Date,
         default: null
     },
@@ -39,13 +46,26 @@ const userSchema = new mongoose.Schema({
         enum: ["Active", "Inactive", "Suspended"],
         default: "Active"
     },
-    address_details: [
+    forgotPasswordOtp: {
+        type: String,
+        default: null
+    },
+    forgotPasswordExpiry: {
+        type: Date,
+        default: null
+    },
+    role: {
+        type: String,
+        enum: ['ADMIN', "USER"],
+        default: "USER"
+    },
+    addressDetails: [
         {
             type: mongoose.Schema.ObjectId,
             ref: 'address'
         }
     ],
-    shopping_cart: [
+    shoppingCart: [
         {
             type: mongoose.Schema.ObjectId,
             ref: 'cartProduct'
@@ -57,19 +77,12 @@ const userSchema = new mongoose.Schema({
             ref: 'order'
         }
     ],
-    forgot_password_otp: {
-        type: String,
-        default: null
-    },
-    forgot_password_expiry: {
-        type: Date,
-        default: ""
-    },
-    role: {
-        type: String,
-        enum: ['ADMIN', "USER"],
-        default: "USER"
-    }
+    favoriteProduct: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'product'
+        }
+    ]
 }, {
     timestamps: true
 })

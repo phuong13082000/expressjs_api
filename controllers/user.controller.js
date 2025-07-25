@@ -1,18 +1,21 @@
 import dotenv from "dotenv";
 import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { OAuth2Client } from "google-auth-library";
 
 import UserModel from '../models/user.model.js'
-import {saveImage} from "../utils/uploadImageLocal.js";
-import {generatedAccessToken, generatedRefreshToken} from "../utils/generatedToken.js";
+import { saveImage } from "../utils/uploadImageLocal.js";
+import { generatedAccessToken, generatedRefreshToken } from "../utils/generatedToken.js";
 
 dotenv.config();
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+
 export async function registerController(req, res) {
     try {
-        const {name, email, password} = req.body
+        const { name, email, password } = req.body
 
-        const user = await UserModel.findOne({email})
+        const user = await UserModel.findOne({ email })
 
         if (user) {
             return res.json({
@@ -57,9 +60,9 @@ export async function registerController(req, res) {
 
 export async function verifyEmailController(req, res) {
     try {
-        const {code} = req.body
+        const { code } = req.body
 
-        const user = await UserModel.findOne({_id: code})
+        const user = await UserModel.findOne({ _id: code })
 
         if (!user) {
             return res.status(400).json({
@@ -68,7 +71,7 @@ export async function verifyEmailController(req, res) {
             })
         }
 
-        await UserModel.updateOne({_id: code}, {verify_email: true})
+        await UserModel.updateOne({ _id: code }, { verifyEmail: true })
 
         return res.json({
             success: true,
@@ -84,9 +87,9 @@ export async function verifyEmailController(req, res) {
 
 export async function loginController(req, res) {
     try {
-        const {email, password} = req.body
+        const { email, password } = req.body
 
-        const user = await UserModel.findOne({email})
+        const user = await UserModel.findOne({ email })
 
         if (!user) {
             return res.status(400).json({
@@ -114,7 +117,7 @@ export async function loginController(req, res) {
         const accessToken = await generatedAccessToken(user._id)
         const refreshToken = await generatedRefreshToken(user._id)
 
-        await UserModel.findByIdAndUpdate(user?._id, {last_login_date: new Date()})
+        await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
 
         const cookiesOption = {
             httpOnly: true,
@@ -153,7 +156,7 @@ export async function logoutController(req, res) {
         res.clearCookie("accessToken", cookiesOption)
         res.clearCookie("refreshToken", cookiesOption)
 
-        await UserModel.findByIdAndUpdate(userid, {refresh_token: ""})
+        await UserModel.findByIdAndUpdate(userid, { refreshToken: "" })
 
         return res.json({
             success: true,
@@ -174,7 +177,7 @@ export async function uploadAvatar(req, res) {
 
         const upload = saveImage(image)
 
-        await UserModel.findByIdAndUpdate(userId, {avatar: upload})
+        await UserModel.findByIdAndUpdate(userId, { avatar: upload })
 
         return res.json({
             success: true,
@@ -194,7 +197,7 @@ export async function uploadAvatar(req, res) {
 export async function updateDetails(req, res) {
     try {
         const userId = req.userId
-        const {name, email, mobile, password} = req.body
+        const { name, email, mobile, password } = req.body
 
         let hashPassword = ""
 
@@ -203,11 +206,11 @@ export async function updateDetails(req, res) {
             hashPassword = await bcryptjs.hash(password, salt)
         }
 
-        await UserModel.updateOne({_id: userId}, {
-            ...(name && {name: name}),
-            ...(email && {email: email}),
-            ...(mobile && {mobile: mobile}),
-            ...(password && {password: hashPassword})
+        await UserModel.updateOne({ _id: userId }, {
+            ...(name && { name: name }),
+            ...(email && { email: email }),
+            ...(mobile && { mobile: mobile }),
+            ...(password && { password: hashPassword })
         })
 
         return res.json({
@@ -224,9 +227,9 @@ export async function updateDetails(req, res) {
 
 export async function forgotPasswordController(req, res) {
     try {
-        const {email} = req.body
+        const { email } = req.body
 
-        const user = await UserModel.findOne({email})
+        const user = await UserModel.findOne({ email })
 
         if (!user) {
             return res.status(400).json({
@@ -239,8 +242,8 @@ export async function forgotPasswordController(req, res) {
         const expireTime = new Date() + 60 * 60 * 1000 // 1hr
 
         await UserModel.findByIdAndUpdate(user._id, {
-            forgot_password_otp: otp,
-            forgot_password_expiry: new Date(expireTime).toISOString()
+            forgotPasswordOtp: otp,
+            forgotPasswordExpiry: new Date(expireTime).toISOString()
         })
 
         // await sendEmail({
@@ -266,7 +269,7 @@ export async function forgotPasswordController(req, res) {
 
 export async function verifyForgotPasswordOtp(req, res) {
     try {
-        const {email, otp} = req.body
+        const { email, otp } = req.body
 
         if (!email || !otp) {
             return res.status(400).json({
@@ -275,7 +278,7 @@ export async function verifyForgotPasswordOtp(req, res) {
             })
         }
 
-        const user = await UserModel.findOne({email})
+        const user = await UserModel.findOne({ email })
 
         if (!user) {
             return res.status(400).json({
@@ -286,14 +289,14 @@ export async function verifyForgotPasswordOtp(req, res) {
 
         const currentTime = new Date().toISOString()
 
-        if (user.forgot_password_expiry < currentTime) {
+        if (user.forgotPasswordExpiry < currentTime) {
             return res.status(400).json({
                 success: false,
                 message: "Otp is expired",
             })
         }
 
-        if (otp !== user.forgot_password_otp) {
+        if (otp !== user.forgotPasswordOtp) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid otp",
@@ -301,8 +304,8 @@ export async function verifyForgotPasswordOtp(req, res) {
         }
 
         await UserModel.findByIdAndUpdate(user?._id, {
-            forgot_password_otp: "",
-            forgot_password_expiry: ""
+            forgotPasswordOtp: "",
+            forgotPasswordExpiry: ""
         })
 
         return res.json({
@@ -319,7 +322,7 @@ export async function verifyForgotPasswordOtp(req, res) {
 
 export async function resetPassword(req, res) {
     try {
-        const {email, newPassword, confirmPassword} = req.body
+        const { email, newPassword, confirmPassword } = req.body
 
         if (!email || !newPassword || !confirmPassword) {
             return res.status(400).json({
@@ -327,7 +330,7 @@ export async function resetPassword(req, res) {
             })
         }
 
-        const user = await UserModel.findOne({email})
+        const user = await UserModel.findOne({ email })
 
         if (!user) {
             return res.status(400).json({
@@ -346,7 +349,7 @@ export async function resetPassword(req, res) {
         const salt = await bcryptjs.genSalt(10)
         const hashPassword = await bcryptjs.hash(newPassword, salt)
 
-        await UserModel.findOneAndUpdate(user._id, {password: hashPassword})
+        await UserModel.findOneAndUpdate(user._id, { password: hashPassword })
 
         return res.json({
             success: true,
@@ -397,7 +400,7 @@ export async function refreshToken(req, res) {
             data: {
                 accessToken: newAccessToken
             },
-            message: "New Access token generated",
+            message: "New access token generated",
         })
     } catch (error) {
         return res.status(500).json({
@@ -410,12 +413,64 @@ export async function refreshToken(req, res) {
 export async function userDetails(req, res) {
     try {
         const userId = req.userId
-        const user = await UserModel.findById(userId).select('-password -refresh_token')
+        const user = await UserModel.findById(userId).select('-password -refreshToken')
 
         return res.json({
             success: true,
             data: user,
             message: 'user details',
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || error,
+        })
+    }
+}
+
+export async function googleLogin(req, res) {
+    const { idToken } = req.body;
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID
+        })
+
+        const payload = ticket.getPayload();
+        const { email, name, picture } = payload;
+
+        const user = await UserModel.findOne({ email });
+
+        if (!user) {
+            user = await UserModel.create({ 
+                email: email, 
+                name: name, 
+                avatar: picture, 
+                provider: 'google', 
+            });
+        }
+
+        const accessToken = await generatedAccessToken(user._id)
+        const refreshToken = await generatedRefreshToken(user._id)
+
+        await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
+
+        const cookiesOption = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
+        };
+
+        res.cookie('accessToken', accessToken, cookiesOption)
+        res.cookie('refreshToken', refreshToken, cookiesOption)
+
+        return res.json({
+            success: true,
+            data: {
+                token: accessToken
+            },
+            message: "Login Google successfully",
         })
     } catch (error) {
         return res.status(500).json({

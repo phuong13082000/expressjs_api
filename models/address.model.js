@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema({
-    address_line: {
+    addressLine: {
         type: String,
         default: null
     },

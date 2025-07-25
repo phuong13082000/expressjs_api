@@ -27,9 +27,8 @@ export async function cashOnDeliveryOrderController(req, res) {
 
         const generatedOrder = await OrderModel.insertMany(payload)
 
-        ///remove from the cart
-        const removeCartItems = await CartModel.deleteMany({userId: userId})
-        const updateInUser = await UserModel.updateOne({_id: userId}, {shopping_cart: []})
+        await CartModel.deleteMany({userId: userId})
+        await UserModel.updateOne({_id: userId}, {shopping_cart: []})
 
         return res.json({
             success: true,
@@ -51,7 +50,7 @@ export const priceWithDiscount = (price, dis = 1) => {
 
 export async function paymentController(req, res) {
     try {
-        const userId = req.userId // auth middleware
+        const userId = req.userId
         const {list_items, totalAmt, addressId, subTotalAmt} = req.body
 
         const user = await UserModel.findById(userId)
@@ -134,9 +133,6 @@ const getOrderProductItems = async ({lineItems, userId, addressId, paymentId, pa
 
 export async function webhookStripe(req, res) {
     const event = req.body;
-    const endPointSecret = process.env.STRIPE_ENPOINT_WEBHOOK_SECRET_KEY
-
-    console.log("event", event)
 
     switch (event.type) {
         case 'checkout.session.completed':
@@ -154,13 +150,11 @@ export async function webhookStripe(req, res) {
 
             const order = await OrderModel.insertMany(orderProduct)
 
-            console.log(order)
             if (Boolean(order[0])) {
-                const removeCartItems = await UserModel.findByIdAndUpdate(userId, {
-                    shopping_cart: []
-                })
-                const removeCartProductDB = await CartModel.deleteMany({userId: userId})
+                await UserModel.findByIdAndUpdate(userId, {shopping_cart: []})
+                await CartModel.deleteMany({userId: userId})
             }
+
             break;
         default:
             console.log(`Unhandled event type ${event.type}`);

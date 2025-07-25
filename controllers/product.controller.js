@@ -12,7 +12,7 @@ export const createProductController = async (req, res) => {
             price,
             discount,
             description,
-            more_details,
+            moreDetails,
         } = req.body
 
         if (!name || !image[0] || !category[0] || !unit || !price || !description) {
@@ -32,7 +32,7 @@ export const createProductController = async (req, res) => {
             price,
             discount,
             description,
-            more_details,
+            moreDetails,
         })
 
         await product.save()
