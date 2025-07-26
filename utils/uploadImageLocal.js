@@ -19,6 +19,8 @@ const upload = multer({
 });
 
 export const saveImage = (file, folder = 'images') => {
+    if(!file) return null;
+
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
     const dirPath = path.join(path.dirname(fileURLToPath(import.meta.url)), `../public/${folder}`);

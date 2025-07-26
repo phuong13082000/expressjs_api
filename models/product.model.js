@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 const productSchema = new mongoose.Schema({
     name: {
@@ -7,7 +8,7 @@ const productSchema = new mongoose.Schema({
     },
     slug: {
         type: String,
-        required: true,
+        unique: true
     },
     images: {
         type: Array,
@@ -58,6 +59,13 @@ productSchema.index({
     name: 10,
     description: 5
 })
+
+productSchema.pre("save", function (next) {
+    if (!this.slug && this.name) {
+        this.slug = slugify(this.name, { lower: true, strict: true });
+    }
+    next();
+});
 
 const ProductModel = mongoose.model('product', productSchema)
 

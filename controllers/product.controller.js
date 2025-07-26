@@ -4,7 +4,6 @@ export const createProductController = async (req, res) => {
     try {
         const {
             name,
-            slug,
             image,
             category,
             unit,
@@ -24,7 +23,6 @@ export const createProductController = async (req, res) => {
 
         const product = new ProductModel({
             name,
-            slug,
             image,
             category,
             unit,

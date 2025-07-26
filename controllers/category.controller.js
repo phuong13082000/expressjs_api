@@ -3,11 +3,10 @@ import ProductModel from "../models/product.model.js";
 
 export const addCategoryController = async (req, res) => {
     try {
-        const {name, slug, image, parent} = req.body
+        const {name, image, parent} = req.body
 
         const addCategory = new CategoryModel({
             name,
-            slug,
             image,
             parent,
         })
@@ -73,13 +72,12 @@ export const getCategoryController = async (req, res) => {
 
 export const updateCategoryController = async (req, res) => {
     try {
-        const {_id, name, slug, image, parent} = req.body
+        const {_id, name, image, parent} = req.body
 
         const update = await CategoryModel.updateOne({
             _id: _id
         }, {
             name,
-            slug,
             image,
             parent,
         })
