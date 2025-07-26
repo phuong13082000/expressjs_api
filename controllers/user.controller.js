@@ -170,7 +170,7 @@ export async function logoutController(req, res) {
     }
 }
 
-export async function uploadAvatar(req, res) {
+export async function uploadAvatarController(req, res) {
     try {
         const userId = req.userId
         const image = req.file
@@ -194,7 +194,7 @@ export async function uploadAvatar(req, res) {
     }
 }
 
-export async function updateDetails(req, res) {
+export async function updateDetailsController(req, res) {
     try {
         const userId = req.userId
         const { name, email, mobile, password } = req.body
@@ -267,7 +267,7 @@ export async function forgotPasswordController(req, res) {
     }
 }
 
-export async function verifyForgotPasswordOtp(req, res) {
+export async function verifyForgotPasswordOtpController(req, res) {
     try {
         const { email, otp } = req.body
 
@@ -320,13 +320,20 @@ export async function verifyForgotPasswordOtp(req, res) {
     }
 }
 
-export async function resetPassword(req, res) {
+export async function resetPasswordController(req, res) {
     try {
         const { email, newPassword, confirmPassword } = req.body
 
         if (!email || !newPassword || !confirmPassword) {
             return res.status(400).json({
-                message: "provide required fields email, new password, confirm password"
+                message: "Provide required fields"
+            })
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "new password and confirm password must be same.",
             })
         }
 
@@ -336,13 +343,6 @@ export async function resetPassword(req, res) {
             return res.status(400).json({
                 success: false,
                 message: "Email is not available",
-            })
-        }
-
-        if (newPassword !== confirmPassword) {
-            return res.status(400).json({
-                success: false,
-                message: "new password and confirm password must be same.",
             })
         }
 
@@ -363,7 +363,7 @@ export async function resetPassword(req, res) {
     }
 }
 
-export async function refreshToken(req, res) {
+export async function refreshTokenController(req, res) {
     try {
         const refreshToken = req.cookies.refreshToken || req?.headers?.authorization?.split(" ")[1]
 
@@ -379,7 +379,7 @@ export async function refreshToken(req, res) {
         if (!verifyToken) {
             return res.status(401).json({
                 success: false,
-                message: "token is expired",
+                message: "Token is expired",
             })
         }
 
@@ -398,7 +398,7 @@ export async function refreshToken(req, res) {
         return res.json({
             success: true,
             data: {
-                accessToken: newAccessToken
+                token: newAccessToken
             },
             message: "New access token generated",
         })
@@ -410,7 +410,7 @@ export async function refreshToken(req, res) {
     }
 }
 
-export async function userDetails(req, res) {
+export async function userDetailsController(req, res) {
     try {
         const userId = req.userId
         const user = await UserModel.findById(userId).select('-password -refreshToken')
@@ -428,26 +428,30 @@ export async function userDetails(req, res) {
     }
 }
 
-export async function googleLogin(req, res) {
-    const { idToken } = req.body;
-
+export async function googleLoginController(req, res) {
     try {
-        const ticket = await client.verifyIdToken({
-            idToken,
-            audience: process.env.GOOGLE_CLIENT_ID
-        })
-
+        const { idToken } = req.body;
+      
+        const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID })
+     
         const payload = ticket.getPayload();
         const { email, name, picture } = payload;
 
         const user = await UserModel.findOne({ email });
 
+        if (user.status !== "Active") {
+            return res.status(400).json({
+                success: false,
+                message: "Your account is not active. Contact the administrator.",
+            })
+        }
+
         if (!user) {
-            user = await UserModel.create({ 
-                email: email, 
-                name: name, 
-                avatar: picture, 
-                provider: 'google', 
+            user = await UserModel.create({
+                email: email,
+                name: name,
+                avatar: picture,
+                provider: 'google',
             });
         }
 
@@ -471,6 +475,24 @@ export async function googleLogin(req, res) {
                 token: accessToken
             },
             message: "Login Google successfully",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || error,
+        })
+    }
+}
+
+export async function deactiveUserController(req, res) {
+    try {
+        const userId = req.userId
+
+        await UserModel.findByIdAndUpdate(userId, { status: "Suspended" })
+
+        return res.json({
+            success: true,
+            message: "deactive successfully",
         })
     } catch (error) {
         return res.status(500).json({
