@@ -29,12 +29,12 @@ userRouter.post('/login', validateMiddleware(loginSchema), loginController)
 userRouter.post('/refresh-token', refreshTokenController)
 userRouter.post('/login-google', googleLoginController)
 userRouter.post('/logout', authMiddleware, logoutController)
+userRouter.post('/deactive', authMiddleware, deactiveUserController)
 
 userRouter.put('/upload-avatar', authMiddleware, uploadMiddlewareAvatar, uploadAvatarController)
 userRouter.put('/update-user', authMiddleware, updateDetailsController)
 userRouter.put('/forgot-password', forgotPasswordController)
 userRouter.put('/verify-forgot-password-otp', verifyForgotPasswordOtpController)
 userRouter.put('/reset-password', resetPasswordController)
-userRouter.put('/deactive', authMiddleware, deactiveUserController)
 
 export default userRouter

@@ -45,7 +45,8 @@ const productSchema = new mongoose.Schema({
     category: [
         {
             type: mongoose.Schema.ObjectId,
-            ref: 'category'
+            ref: 'category',
+            default: null,
         }
     ],
 }, {

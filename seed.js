@@ -1,103 +1,194 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import slugify from "slugify";
+import fs from 'fs';
+import path from 'path';
 
+import connectDb from "./configs/connectDb.js";
 import CategoryModel from "./models/category.model.js";
+import ProductModel from "./models/product.model.js";
 
 dotenv.config();
+
+const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
 
 const buildImagePath = (folder, filename) => {
     return `${process.env.SERVER_URL}/${folder}/${filename}`;
 };
 
-const seedCategories = async () => {
-    try {
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log("connected to mongodb");
+const CATEGORY_PATH = './public/category';
+const SUB_CATEGORY_PATH = './public/sub-category';
+const PRODUCT_PATH = './public/product'
 
-        await CategoryModel.deleteMany({});
+function getCategories() {
+    const categoryImages = fs.readdirSync(CATEGORY_PATH);
+    const categories = [];
 
-        const categories = [
-            {
-                name: "Atta, Rice & Dal",
-                image: buildImagePath('category', 'Atta, Rice & Dal.png'),
-                subcategories: [
-                    {
-                        name: "Atta",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Atta.jpg'),
-                    },
-                    {
-                        name: "Besan, Sooji & Maida",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Besan, Sooji & Maida.webp'),
-                    },
-                    {
-                        name: "Millet & Other Flours",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Millet & Other Flours.webp'),
-                    },
-                    {
-                        name: "Moong & Masoor",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Moong & Masoor.webp'),
-                    },
-                    {
-                        name: "Poha, Daliya & Other Grains",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Poha, Daliya & Other Grains.jpg'),
-                    },
-                    {
-                        name: "Rajma, Chhole & Others",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Rajma, Chhole & Others.webp'),
-                    },
-                    {
-                        name: "Rice",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Rice.webp'),
-                    },
-                    {
-                        name: "Toor, Urad & Chana",
-                        image: buildImagePath('sub-category/Atta, Rice & Dal', 'Toor, Urad & Chana.webp'),
-                    },
-                ],
-            },
-            {
-                name: "Baby Care",
-                image: buildImagePath('category', 'Baby Care.png'),
-                subcategories: [],
-            },
-            {
-                name: "Bakery & Biscuits",
-                image: buildImagePath('category', 'Bakery & Biscuits.png'),
-                subcategories: [],
-            },
-            {
-                name: "Breakfast & Instant Food",
-                image: buildImagePath('category', 'Breakfast & Instant Food.png'),
-                subcategories: [],
-            },
-        ];
+    categoryImages.forEach(file => {
+        const ext = path.extname(file);
+        const name = path.basename(file, ext);
+        const slug = slugify(name, { lower: true, strict: true });
+        const subCatFolder = path.join(SUB_CATEGORY_PATH, name);
 
-        for (const category of categories) {
-            const parent = await CategoryModel.create({
-                name: category.name,
-                slug: category.slug || slugify(category.name, { lower: true, strict: true }),
-                image: category.image,
+        let subCategories = [];
+
+        if (fs.existsSync(subCatFolder) && fs.statSync(subCatFolder).isDirectory()) {
+            const subImages = fs.readdirSync(subCatFolder).filter(f => {
+                const ext = path.extname(f).toLowerCase();
+                return imageExtensions.includes(ext);
             });
 
-            if (category.subcategories?.length) {
-                const subs = category.subcategories.map((sub) => ({
-                    ...sub,
-                    slug: sub.slug || slugify(sub.name, { lower: true, strict: true }),
-                    parent: parent._id,
-                }));
-
-                await CategoryModel.insertMany(subs);
-            }
+            subCategories = subImages.map(sub => {
+                const subName = path.basename(sub, path.extname(sub));
+                return {
+                    name: subName,
+                    slug: slugify(subName, { lower: true, strict: true }),
+                    image: buildImagePath(`sub-category/${name}`, sub)
+                };
+            });
         }
 
-        console.log("seed category successfully created");
+        categories.push({
+            name,
+            slug,
+            image: buildImagePath('category', file),
+            subCategories
+        });
+    });
+
+    return categories;
+}
+
+const data = getCategories();
+fs.writeFileSync('./data/categories.json', JSON.stringify(data, null, 2), 'utf-8');
+console.log('created file: categories.json');
+
+function scanAllProducts(root) {
+    const products = [];
+
+    const catDirs = fs.readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory());
+
+    catDirs.forEach(cat => {
+        const catPath = path.join(root, cat.name);
+        const subCatDirs = fs.readdirSync(catPath, { withFileTypes: true }).filter(d => d.isDirectory());
+
+        subCatDirs.forEach(sub => {
+            const subPath = path.join(catPath, sub.name);
+            const productDirs = fs.readdirSync(subPath, { withFileTypes: true }).filter(d => d.isDirectory());
+
+            productDirs.forEach(prod => {
+                const prodPath = path.join(subPath, prod.name);
+                const images = fs.readdirSync(prodPath)
+                    .filter(f => imageExtensions.includes(path.extname(f).toLowerCase()))
+                    .map(file => ({
+                        src: buildImagePath(`${cat.name}/${sub.name}`, file),
+                        alt: slugify(path.basename(file, path.extname(file)), { lower: true, strict: true }),
+                    }));
+
+                products.push({
+                    name: prod.name,
+                    slug: slugify(prod.name, { lower: true, strict: true }),
+                    images: images,
+                    unit: 10,
+                    stock: 10,
+                    price: 20,
+                    discount: 0,
+                    description: slugify(prod.name, { lower: true, strict: true }),
+                    moreDetails: {},
+                    publish: true,
+                    category: sub.name,
+                });
+            });
+        });
+    });
+
+    return products;
+}
+
+const result = scanAllProducts(PRODUCT_PATH);
+fs.writeFileSync('./data/products.json', JSON.stringify(result, null, 2), 'utf-8');
+console.log('created file: products.json');
+
+async function saveCategoryFromJson() {
+    try {
+        await CategoryModel.deleteMany({});
+
+        // Read JSON
+        const data = JSON.parse(fs.readFileSync('./data/categories.json', 'utf-8'));
+
+        for (const cat of data) {
+            const parentDoc = await CategoryModel.create({
+                name: cat.name,
+                slug: cat.slug,
+                image: cat.image,
+                parent: null,
+            });
+            console.log(`category: ${cat.name}`);
+            for (const sub of cat.subCategories) {
+                await CategoryModel.create({
+                    name: sub.name,
+                    slug: sub.slug,
+                    image: sub.image,
+                    parent: parentDoc._id
+                });
+                console.log(`sub-category: ${sub.name}`);
+            }
+        }
     } catch (err) {
-        console.error("error seed:", err);
+        console.error("error:", err);
+    }
+}
+
+async function saveProductFromJson() {
+    try {
+        await ProductModel.deleteMany({});
+
+        // Read JSON
+        const data = JSON.parse(fs.readFileSync('./data/products.json', 'utf-8'));
+
+        for (const item of data) {
+            let categoryDoc = await CategoryModel.findOne({ name: item.category });
+
+            if (!categoryDoc) {
+                categoryDoc = new CategoryModel({
+                    name: item.category,
+                    slug: slugify(item.category, { lower: true, strict: true }),
+                    image: null,
+                    parent: null,
+                });
+
+                await categoryDoc.save();
+                console.log(`category: ${item.category}`);
+            }
+
+            const product = new ProductModel({
+                ...item,
+                category: [categoryDoc._id],
+            });
+
+            await product.save();
+            console.log(`product: ${item.name}`);
+        }
+    } catch (err) {
+        console.error("error:", err);
+    }
+}
+
+async function main() {
+    try {
+        await connectDb();
+
+        await saveCategoryFromJson();
+        console.log('Created categories!');
+
+        await saveProductFromJson();
+        console.log('Created products!');
+    } catch (err) {
+        console.error('Error:', err);
     } finally {
         await mongoose.disconnect();
-        console.log("disconnected to mongodb");
+        console.log('Disconnected from MongoDB');
     }
-};
+}
 
-seedCategories();
+main();
