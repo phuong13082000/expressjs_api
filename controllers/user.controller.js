@@ -5,7 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 
 import UserModel from '../models/user.model.js'
 import { saveImage } from "../utils/uploadImageLocal.js";
-import { generatedAccessToken, generatedRefreshToken } from "../utils/generatedToken.js";
+import generateToken from "../utils/generateToken.js";
 
 dotenv.config();
 
@@ -105,7 +105,7 @@ export async function loginController(req, res) {
             })
         }
 
-        const checkPassword = await bcryptjs.compare(password, user.password)
+        const checkPassword = bcryptjs.compare(password, user.password)
 
         if (!checkPassword) {
             return res.status(400).json({
@@ -114,8 +114,8 @@ export async function loginController(req, res) {
             })
         }
 
-        const accessToken = await generatedAccessToken(user._id)
-        const refreshToken = await generatedRefreshToken(user._id)
+        const accessToken = generateToken.access(user._id)
+        const refreshToken = await generateToken.refresh(user._id)
 
         await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
 
@@ -374,7 +374,7 @@ export async function refreshTokenController(req, res) {
             })
         }
 
-        const verifyToken = await jwt.verify(refreshToken, process.env.SECRET_KEY_REFRESH_TOKEN)
+        const verifyToken = jwt.verify(refreshToken, process.env.SECRET_KEY_REFRESH_TOKEN)
 
         if (!verifyToken) {
             return res.status(401).json({
@@ -455,8 +455,8 @@ export async function googleLoginController(req, res) {
             });
         }
 
-        const accessToken = await generatedAccessToken(user._id)
-        const refreshToken = await generatedRefreshToken(user._id)
+        const accessToken = generateToken.access(user._id)
+        const refreshToken = await generateToken.refresh(user._id)
 
         await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
 

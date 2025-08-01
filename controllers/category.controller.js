@@ -1,8 +1,7 @@
 import Redis from "ioredis";
 import CategoryModel from "../models/category.model.js";
 import ProductModel from "../models/product.model.js";
-
-const redis = new Redis();
+import RedisClient from "../utils/redis.js";
 
 export const addCategoryController = async (req, res) => {
     try {
@@ -16,8 +15,8 @@ export const addCategoryController = async (req, res) => {
 
         await addCategory.save()
 
-        await redis.del('categories');
-        
+        await RedisClient.deleteData('categories');
+
         return res.json({
             success: true,
             message: "Add Category"
@@ -62,7 +61,7 @@ export const getCategoryController = async (req, res) => {
             }
         ]);
 
-        await redis.set('categories', JSON.stringify(data), 'EX', 3600); // TTL: 1h
+        await RedisClient.setData('categories', JSON.stringify(data), 3600);
 
         return res.json({
             success: true,
@@ -89,7 +88,7 @@ export const updateCategoryController = async (req, res) => {
             parent,
         })
 
-        await redis.del('categories');
+        await RedisClient.deleteData('categories');
 
         return res.json({
             success: true,
@@ -121,7 +120,7 @@ export const deleteCategoryController = async (req, res) => {
 
         await CategoryModel.deleteOne({ _id: _id })
 
-        await redis.del('categories');
+        await RedisClient.deleteData('categories');
 
         return res.json({
             success: true,

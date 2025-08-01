@@ -1,15 +1,13 @@
-import Redis from "ioredis";
-
-const redis = new Redis();
+import RedisClient from '../utils/redis.js';
 
 const cacheCategoriesMiddleware = async (req, res, next) => {
     try {
-        const data = await redis.get('categories');
+        const data = await RedisClient.getData('categories');
 
         if (data) {
             return res.json({
                 success: true,
-                data: data,
+                data: JSON.parse(data),
                 message: "list category cache"
             })
         }
