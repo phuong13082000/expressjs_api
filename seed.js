@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import slugify from "slugify";
 import fs from 'fs';
 import path from 'path';
+import Redis from "ioredis";
 
 import connectDb from "./configs/connectDb.js";
 import CategoryModel from "./models/category.model.js";
@@ -10,17 +11,17 @@ import ProductModel from "./models/product.model.js";
 
 dotenv.config();
 
+const redis = new Redis();
+const CATEGORY_PATH = './public/category';
+const SUB_CATEGORY_PATH = './public/sub-category';
+const PRODUCT_PATH = './public/product'
 const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
 
 const buildImagePath = (folder, filename) => {
     return `${process.env.SERVER_URL}/${folder}/${filename}`;
 };
 
-const CATEGORY_PATH = './public/category';
-const SUB_CATEGORY_PATH = './public/sub-category';
-const PRODUCT_PATH = './public/product'
-
-function getCategories() {
+function scanAllCategories() {
     const categoryImages = fs.readdirSync(CATEGORY_PATH);
     const categories = [];
 
@@ -58,10 +59,6 @@ function getCategories() {
 
     return categories;
 }
-
-const data = getCategories();
-fs.writeFileSync('./data/categories.json', JSON.stringify(data, null, 2), 'utf-8');
-console.log('created file: categories.json');
 
 function scanAllProducts(root) {
     const products = [];
@@ -104,10 +101,6 @@ function scanAllProducts(root) {
 
     return products;
 }
-
-const result = scanAllProducts(PRODUCT_PATH);
-fs.writeFileSync('./data/products.json', JSON.stringify(result, null, 2), 'utf-8');
-console.log('created file: products.json');
 
 async function saveCategoryFromJson() {
     try {
@@ -174,6 +167,14 @@ async function saveProductFromJson() {
     }
 }
 
+const dataCategories = scanAllCategories();
+fs.writeFileSync('./data/categories.json', JSON.stringify(dataCategories, null, 2), 'utf-8');
+console.log('created file: categories.json');
+
+const dataProducts = scanAllProducts(PRODUCT_PATH);
+fs.writeFileSync('./data/products.json', JSON.stringify(dataProducts, null, 2), 'utf-8');
+console.log('created file: products.json');
+
 async function main() {
     try {
         await connectDb();
@@ -183,6 +184,8 @@ async function main() {
 
         await saveProductFromJson();
         console.log('Created products!');
+
+        await redis.del('categories');
     } catch (err) {
         console.error('Error:', err);
     } finally {
