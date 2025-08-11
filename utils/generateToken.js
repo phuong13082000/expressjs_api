@@ -7,23 +7,23 @@ dotenv.config()
 
 class generateToken {
     access(userId) {
-        const secretKey = process.env.SECRET_KEY_ACCESS_TOKEN;
+        const accessKey = process.env.SECRET_KEY_ACCESS_TOKEN;
 
-        if (!secretKey) {
+        if (!accessKey) {
             throw new Error("SECRET_KEY_ACCESS_TOKEN is not defined");
         }
 
-        return jwt.sign({ id: userId }, secretKey, { expiresIn: '5h' });
+        return jwt.sign({ id: userId }, accessKey, { expiresIn: '5h' });
     }
 
     async refresh(userId) {
-        const secretKey = process.env.SECRET_KEY_REFRESH_TOKEN;
+        const refreshKey = process.env.SECRET_KEY_REFRESH_TOKEN;
 
-        if (!secretKey) {
+        if (!refreshKey) {
             throw new Error("SECRET_KEY_REFRESH_TOKEN is not defined");
         }
 
-        const token = jwt.sign({ id: userId }, secretKey, { expiresIn: '7d' })
+        const token = jwt.sign({ id: userId }, refreshKey, { expiresIn: '7d' })
 
         await UserModel.updateOne({ _id: userId }, { refreshToken: token })
 

@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken'
+import UserModel from "../models/user.model.js";
 
 dotenv.config();
 
@@ -21,6 +22,15 @@ const authMiddleware = async (req, res, next) => {
                 success: false,
                 message: "Unauthorized access",
             })
+        }
+
+        const user = await UserModel.findById(decode.id);
+
+        if (!user || !user.refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Session expired",
+            });
         }
 
         req.userId = decode.id

@@ -114,7 +114,7 @@ export async function loginController(req, res) {
             })
         }
 
-        const accessToken = await generateToken.access(user._id)
+        const accessToken = generateToken.access(user._id)
         const refreshToken = await generateToken.refresh(user._id)
 
         await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
@@ -156,7 +156,7 @@ export async function loginController(req, res) {
 
 export async function logoutController(req, res) {
     try {
-        const userid = req.userId
+        const userId = req.userId
 
         const cookiesOption = {
             httpOnly: true,
@@ -167,7 +167,7 @@ export async function logoutController(req, res) {
         res.clearCookie("accessToken", cookiesOption)
         res.clearCookie("refreshToken", cookiesOption)
 
-        await UserModel.findByIdAndUpdate(userid, { refreshToken: "" })
+        await UserModel.findByIdAndUpdate(userId, { refreshToken: "" })
 
         return res.json({
             success: true,
@@ -396,7 +396,7 @@ export async function refreshTokenController(req, res) {
 
         const userId = verifyToken?._id
 
-        const newAccessToken = await generateToken.access(userId)
+        const newAccessToken = generateToken.access(userId)
 
         const cookiesOption = {
             httpOnly: true,
@@ -425,6 +425,7 @@ export async function userDetailsController(req, res) {
     try {
         const userId = req.userId
         const user = await UserModel.findById(userId)
+            .select("-password -createdAt -updatedAt")
 
         if(!user) {
             return res.status(401).json({
@@ -435,19 +436,7 @@ export async function userDetailsController(req, res) {
 
         return res.json({
             success: true,
-            data: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar,
-                mobile: user.mobile,
-                refreshToken: user.refreshToken,
-                verifyEmail: user.verifyEmail,
-                lastLoginDate: user.lastLoginDate,
-                status: user.status,
-                role: user.role,
-                provider: user.provider,
-            },
+            data: user,
             message: '',
         })
     } catch (error) {
@@ -485,7 +474,7 @@ export async function googleLoginController(req, res) {
             });
         }
 
-        const accessToken = await generateToken.access(user._id)
+        const accessToken = generateToken.access(user._id)
         const refreshToken = await generateToken.refresh(user._id)
 
         await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
@@ -507,7 +496,7 @@ export async function googleLoginController(req, res) {
                 email: user.email,
                 avatar: user.avatar,
                 mobile: user.mobile,
-                refreshToken: user.refreshToken,
+                refreshToken: refreshToken,
                 verifyEmail: user.verifyEmail,
                 lastLoginDate: user.lastLoginDate,
                 status: user.status,
