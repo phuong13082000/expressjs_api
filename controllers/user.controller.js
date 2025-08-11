@@ -48,7 +48,7 @@ export async function registerController(req, res) {
         return res.json({
             success: true,
             data: save,
-            message: "User register successfully",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -75,7 +75,7 @@ export async function verifyEmailController(req, res) {
 
         return res.json({
             success: true,
-            message: "Verify email done",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -114,7 +114,7 @@ export async function loginController(req, res) {
             })
         }
 
-        const accessToken = generateToken.access(user._id)
+        const accessToken = await generateToken.access(user._id)
         const refreshToken = await generateToken.refresh(user._id)
 
         await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
@@ -131,9 +131,20 @@ export async function loginController(req, res) {
         return res.json({
             success: true,
             data: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                mobile: user.mobile,
+                refreshToken: user.refreshToken,
+                verifyEmail: user.verifyEmail,
+                lastLoginDate: user.lastLoginDate,
+                status: user.status,
+                role: user.role,
+                provider: user.provider,
                 token: accessToken
             },
-            message: "Login successfully",
+            message: "",
         })
     } catch (error) {
         return res.status(500).json({
@@ -160,7 +171,7 @@ export async function logoutController(req, res) {
 
         return res.json({
             success: true,
-            message: "Logout successfully",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -184,7 +195,7 @@ export async function uploadAvatarController(req, res) {
             data: {
                 image: upload
             },
-            message: "upload profile",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -215,7 +226,7 @@ export async function updateDetailsController(req, res) {
 
         return res.json({
             success: true,
-            message: "Updated successfully",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -353,7 +364,7 @@ export async function resetPasswordController(req, res) {
 
         return res.json({
             success: true,
-            message: "Password updated successfully.",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -385,7 +396,7 @@ export async function refreshTokenController(req, res) {
 
         const userId = verifyToken?._id
 
-        const newAccessToken = await generatedAccessToken(userId)
+        const newAccessToken = await generateToken.access(userId)
 
         const cookiesOption = {
             httpOnly: true,
@@ -400,7 +411,7 @@ export async function refreshTokenController(req, res) {
             data: {
                 token: newAccessToken
             },
-            message: "New access token generated",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -413,12 +424,31 @@ export async function refreshTokenController(req, res) {
 export async function userDetailsController(req, res) {
     try {
         const userId = req.userId
-        const user = await UserModel.findById(userId).select('-password -refreshToken')
+        const user = await UserModel.findById(userId)
+
+        if(!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Token is expired",
+            })
+        }
 
         return res.json({
             success: true,
-            data: user,
-            message: 'user details',
+            data: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                mobile: user.mobile,
+                refreshToken: user.refreshToken,
+                verifyEmail: user.verifyEmail,
+                lastLoginDate: user.lastLoginDate,
+                status: user.status,
+                role: user.role,
+                provider: user.provider,
+            },
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -431,13 +461,13 @@ export async function userDetailsController(req, res) {
 export async function googleLoginController(req, res) {
     try {
         const { idToken } = req.body;
-      
+
         const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID })
-     
+
         const payload = ticket.getPayload();
         const { email, name, picture } = payload;
 
-        const user = await UserModel.findOne({ email });
+        let user = await UserModel.findOne({ email });
 
         if (user.status !== "Active") {
             return res.status(400).json({
@@ -455,7 +485,7 @@ export async function googleLoginController(req, res) {
             });
         }
 
-        const accessToken = generateToken.access(user._id)
+        const accessToken = await generateToken.access(user._id)
         const refreshToken = await generateToken.refresh(user._id)
 
         await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
@@ -472,9 +502,20 @@ export async function googleLoginController(req, res) {
         return res.json({
             success: true,
             data: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                mobile: user.mobile,
+                refreshToken: user.refreshToken,
+                verifyEmail: user.verifyEmail,
+                lastLoginDate: user.lastLoginDate,
+                status: user.status,
+                role: user.role,
+                provider: user.provider,
                 token: accessToken
             },
-            message: "Login Google successfully",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -484,7 +525,7 @@ export async function googleLoginController(req, res) {
     }
 }
 
-export async function deactiveUserController(req, res) {
+export async function deactivateUserController(req, res) {
     try {
         const userId = req.userId
 
@@ -492,7 +533,7 @@ export async function deactiveUserController(req, res) {
 
         return res.json({
             success: true,
-            message: "deactive successfully",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({

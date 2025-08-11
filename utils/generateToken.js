@@ -25,7 +25,7 @@ class generateToken {
 
         const token = jwt.sign({ id: userId }, secretKey, { expiresIn: '7d' })
 
-        await UserModel.updateOne({ _id: userId }, { refresh_token: token })
+        await UserModel.updateOne({ _id: userId }, { refreshToken: token })
 
         return token
     }

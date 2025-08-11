@@ -12,7 +12,7 @@ import {
     userDetailsController,
     verifyEmailController,
     verifyForgotPasswordOtpController,
-    deactiveUserController
+    deactivateUserController
 } from '../controllers/user.controller.js'
 import authMiddleware from '../middleware/auth.middleware.js'
 import {uploadMiddlewareAvatar} from "../utils/uploadImageLocal.js";
@@ -29,7 +29,7 @@ userRouter.post('/login', validateMiddleware(loginSchema), loginController)
 userRouter.post('/refresh-token', refreshTokenController)
 userRouter.post('/login-google', googleLoginController)
 userRouter.post('/logout', authMiddleware, logoutController)
-userRouter.post('/deactive', authMiddleware, deactiveUserController)
+userRouter.post('/deactivate', authMiddleware, deactivateUserController)
 
 userRouter.put('/upload-avatar', authMiddleware, uploadMiddlewareAvatar, uploadAvatarController)
 userRouter.put('/update-user', authMiddleware, updateDetailsController)

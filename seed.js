@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import slugify from "slugify";
 import fs from 'fs';
 import path from 'path';
-import Redis from "ioredis";
 
 import connectDb from "./configs/connectDb.js";
 import CategoryModel from "./models/category.model.js";
@@ -11,7 +10,6 @@ import ProductModel from "./models/product.model.js";
 
 dotenv.config();
 
-const redis = new Redis();
 const CATEGORY_PATH = './public/category';
 const SUB_CATEGORY_PATH = './public/sub-category';
 const PRODUCT_PATH = './public/product'
@@ -184,8 +182,6 @@ async function main() {
 
         await saveProductFromJson();
         console.log('Created products!');
-
-        await redis.del('categories');
     } catch (err) {
         console.error('Error:', err);
     } finally {
