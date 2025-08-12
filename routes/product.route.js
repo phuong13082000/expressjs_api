@@ -2,6 +2,7 @@ import {Router} from 'express'
 import {
     createProductController,
     deleteProductDetails,
+    favoriteProduct,
     getProductByCategory,
     getProductController,
     getProductDetails,
@@ -18,6 +19,7 @@ productRouter.post("/get-product-by-category", getProductByCategory)
 productRouter.post('/get-product-details', getProductDetails)
 productRouter.post('/search-product', searchProduct)
 productRouter.post("/create", authMiddleware, adminMiddleware, createProductController)
+productRouter.post("/favorite/:id", authMiddleware, favoriteProduct)
 
 productRouter.put('/update-product-details', authMiddleware, adminMiddleware, updateProductDetails)
 

@@ -1,10 +1,10 @@
 import dotenv from "dotenv";
 import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { OAuth2Client } from "google-auth-library";
+import {OAuth2Client} from "google-auth-library";
 
 import UserModel from '../models/user.model.js'
-import { saveImage } from "../utils/uploadImageLocal.js";
+import {saveImage} from "../utils/uploadImageLocal.js";
 import generateToken from "../utils/generateToken.js";
 
 dotenv.config();
@@ -13,9 +13,9 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 export async function registerController(req, res) {
     try {
-        const { name, email, password } = req.body
+        const {name, email, password} = req.body
 
-        const user = await UserModel.findOne({ email })
+        const user = await UserModel.findOne({email})
 
         if (user) {
             return res.json({
@@ -60,9 +60,9 @@ export async function registerController(req, res) {
 
 export async function verifyEmailController(req, res) {
     try {
-        const { code } = req.body
+        const {code} = req.body
 
-        const user = await UserModel.findOne({ _id: code })
+        const user = await UserModel.findOne({_id: code})
 
         if (!user) {
             return res.status(400).json({
@@ -71,7 +71,7 @@ export async function verifyEmailController(req, res) {
             })
         }
 
-        await UserModel.updateOne({ _id: code }, { verifyEmail: true })
+        await UserModel.updateOne({_id: code}, {verifyEmail: true})
 
         return res.json({
             success: true,
@@ -87,9 +87,9 @@ export async function verifyEmailController(req, res) {
 
 export async function loginController(req, res) {
     try {
-        const { email, password } = req.body
+        const {email, password} = req.body
 
-        const user = await UserModel.findOne({ email })
+        const user = await UserModel.findOne({email})
 
         if (!user) {
             return res.status(400).json({
@@ -117,7 +117,7 @@ export async function loginController(req, res) {
         const accessToken = generateToken.access(user._id)
         const refreshToken = await generateToken.refresh(user._id)
 
-        await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
+        await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
 
         const cookiesOption = {
             httpOnly: true,
@@ -167,7 +167,7 @@ export async function logoutController(req, res) {
         res.clearCookie("accessToken", cookiesOption)
         res.clearCookie("refreshToken", cookiesOption)
 
-        await UserModel.findByIdAndUpdate(userId, { refreshToken: "" })
+        await UserModel.findByIdAndUpdate(userId, {refreshToken: ""})
 
         return res.json({
             success: true,
@@ -188,7 +188,7 @@ export async function uploadAvatarController(req, res) {
 
         const upload = saveImage(image)
 
-        await UserModel.findByIdAndUpdate(userId, { avatar: upload })
+        await UserModel.findByIdAndUpdate(userId, {avatar: upload})
 
         return res.json({
             success: true,
@@ -208,7 +208,7 @@ export async function uploadAvatarController(req, res) {
 export async function updateDetailsController(req, res) {
     try {
         const userId = req.userId
-        const { name, email, mobile, password } = req.body
+        const {name, email, mobile, password} = req.body
 
         let hashPassword = ""
 
@@ -217,11 +217,11 @@ export async function updateDetailsController(req, res) {
             hashPassword = await bcryptjs.hash(password, salt)
         }
 
-        await UserModel.updateOne({ _id: userId }, {
-            ...(name && { name: name }),
-            ...(email && { email: email }),
-            ...(mobile && { mobile: mobile }),
-            ...(password && { password: hashPassword })
+        await UserModel.updateOne({_id: userId}, {
+            ...(name && {name: name}),
+            ...(email && {email: email}),
+            ...(mobile && {mobile: mobile}),
+            ...(password && {password: hashPassword})
         })
 
         return res.json({
@@ -238,9 +238,9 @@ export async function updateDetailsController(req, res) {
 
 export async function forgotPasswordController(req, res) {
     try {
-        const { email } = req.body
+        const {email} = req.body
 
-        const user = await UserModel.findOne({ email })
+        const user = await UserModel.findOne({email})
 
         if (!user) {
             return res.status(400).json({
@@ -280,7 +280,7 @@ export async function forgotPasswordController(req, res) {
 
 export async function verifyForgotPasswordOtpController(req, res) {
     try {
-        const { email, otp } = req.body
+        const {email, otp} = req.body
 
         if (!email || !otp) {
             return res.status(400).json({
@@ -289,7 +289,7 @@ export async function verifyForgotPasswordOtpController(req, res) {
             })
         }
 
-        const user = await UserModel.findOne({ email })
+        const user = await UserModel.findOne({email})
 
         if (!user) {
             return res.status(400).json({
@@ -333,7 +333,7 @@ export async function verifyForgotPasswordOtpController(req, res) {
 
 export async function resetPasswordController(req, res) {
     try {
-        const { email, newPassword, confirmPassword } = req.body
+        const {email, newPassword, confirmPassword} = req.body
 
         if (!email || !newPassword || !confirmPassword) {
             return res.status(400).json({
@@ -348,7 +348,7 @@ export async function resetPasswordController(req, res) {
             })
         }
 
-        const user = await UserModel.findOne({ email })
+        const user = await UserModel.findOne({email})
 
         if (!user) {
             return res.status(400).json({
@@ -360,7 +360,7 @@ export async function resetPasswordController(req, res) {
         const salt = await bcryptjs.genSalt(10)
         const hashPassword = await bcryptjs.hash(newPassword, salt)
 
-        await UserModel.findOneAndUpdate(user._id, { password: hashPassword })
+        await UserModel.findOneAndUpdate(user._id, {password: hashPassword})
 
         return res.json({
             success: true,
@@ -424,14 +424,22 @@ export async function refreshTokenController(req, res) {
 export async function userDetailsController(req, res) {
     try {
         const userId = req.userId
+
         const user = await UserModel.findById(userId)
             .populate({
                 path: 'addressDetails',
                 select: '-createdAt -updatedAt -userId -__v',
+            }).populate({
+                path: 'favoriteProduct',
+                select: '-createdAt -updatedAt -__v',
+                populate: {
+                    path: 'category',
+                    select: '-createdAt -updatedAt -parent -__v',
+                }
             })
             .select("-password -createdAt -updatedAt -__v")
 
-        if(!user) {
+        if (!user) {
             return res.status(401).json({
                 success: false,
                 message: "Token is expired",
@@ -453,14 +461,14 @@ export async function userDetailsController(req, res) {
 
 export async function googleLoginController(req, res) {
     try {
-        const { idToken } = req.body;
+        const {idToken} = req.body;
 
-        const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID })
+        const ticket = await client.verifyIdToken({idToken, audience: process.env.GOOGLE_CLIENT_ID})
 
         const payload = ticket.getPayload();
-        const { email, name, picture } = payload;
+        const {email, name, picture} = payload;
 
-        let user = await UserModel.findOne({ email });
+        let user = await UserModel.findOne({email});
 
         if (user.status !== "Active") {
             return res.status(400).json({
@@ -481,7 +489,7 @@ export async function googleLoginController(req, res) {
         const accessToken = generateToken.access(user._id)
         const refreshToken = await generateToken.refresh(user._id)
 
-        await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
+        await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
 
         const cookiesOption = {
             httpOnly: true,
@@ -522,7 +530,7 @@ export async function deactivateUserController(req, res) {
     try {
         const userId = req.userId
 
-        await UserModel.findByIdAndUpdate(userId, { status: "Suspended" })
+        await UserModel.findByIdAndUpdate(userId, {status: "Suspended"})
 
         return res.json({
             success: true,

@@ -15,7 +15,7 @@ export const addCategoryController = async (req, res) => {
 
         return res.json({
             success: true,
-            message: "Add Category"
+            message: ''
         })
     } catch (error) {
         return res.status(500).json({
@@ -78,7 +78,7 @@ export const getCategoryController = async (req, res) => {
         return res.json({
             success: true,
             data: data,
-            message: ""
+            message: ''
         })
     } catch (error) {
         return res.status(500).json({
@@ -103,7 +103,7 @@ export const updateCategoryController = async (req, res) => {
         return res.json({
             success: true,
             data: update,
-            message: "Updated Category"
+            message: ''
         })
     } catch (error) {
         return res.status(500).json({
@@ -132,7 +132,7 @@ export const deleteCategoryController = async (req, res) => {
 
         return res.json({
             success: true,
-            message: "Delete category successfully"
+            message: ''
         })
     } catch (error) {
         return res.status(500).json({

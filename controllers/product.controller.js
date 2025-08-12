@@ -1,4 +1,5 @@
 import ProductModel from "../models/product.model.js";
+import UserModel from "../models/user.model.js";
 
 export const createProductController = async (req, res) => {
     try {
@@ -237,6 +238,49 @@ export const searchProduct = async (req, res) => {
             },
             message: '',
         })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || error,
+        })
+    }
+}
+
+export const favoriteProduct = async (req, res) => {
+    try {
+        const userId = req.userId
+        const {id} = req.params
+
+        const product = await ProductModel.findOne({_id: id})
+
+        if (!product) {
+            return res.status(400).json({
+                success: false,
+                message: 'not found product',
+            })
+        }
+
+        const user = await UserModel.findById(userId);
+
+        if (user.favoriteProduct.includes(product._id)) {
+            await UserModel.findByIdAndUpdate(userId, {
+                $pull: { favoriteProduct: product._id }
+            });
+
+            return res.json({
+                success: true,
+                message: 'remove',
+            })
+        } else {
+            await UserModel.findByIdAndUpdate(userId, {
+                $addToSet: { favoriteProduct: product._id }
+            });
+
+            return res.json({
+                success: true,
+                message: 'add',
+            })
+        }
     } catch (error) {
         return res.status(500).json({
             success: false,
