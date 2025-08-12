@@ -1,19 +1,36 @@
 import {z} from "zod";
-
-const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const regexName = /^[a-zA-Z0-9 _-]+$/
+import {RegexPatterns} from "../constants/regex.js";
 
 export const registerSchema = z.object({
-    name: z.string().min(2).max(32).regex(regexName, 'invalid name'),
-    email: z.string().regex(regexEmail, 'invalid email'),
-    password: z.string().min(6).max(32),
-    confirmPassword: z.string().min(6).max(32),
-}).refine((data) => data.password === data.confirmPassword, {
+    name: z
+        .string()
+        .min(2)
+        .max(32)
+        .regex(RegexPatterns.name, 'invalid name'),
+    email: z
+        .string()
+        .regex(RegexPatterns.email, 'invalid email'),
+    password: z
+        .string()
+        .min(6)
+        .max(32),
+    confirmPassword: z
+        .string()
+        .min(6)
+        .max(32),
+}).refine((data) => {
+    return data.password === data.confirmPassword;
+}, {
     path: ["confirmPassword"],
     message: "confirm password not match",
 });
 
 export const loginSchema = z.object({
-    email: z.string().regex(regexEmail, 'invalid email'),
-    password: z.string().min(6).max(32),
+    email: z
+        .string()
+        .regex(RegexPatterns.email, 'invalid email'),
+    password: z
+        .string()
+        .min(6)
+        .max(32),
 });

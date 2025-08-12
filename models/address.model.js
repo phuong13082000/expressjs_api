@@ -1,28 +1,12 @@
 import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema({
-    addressLine: {
-        type: String,
-        default: null
-    },
-    city: {
-        type: String,
-        default: null
-    },
-    state: {
-        type: String,
-        default: null
-    },
-    pinCode: {
-        type: String
-    },
-    country: {
-        type: String
-    },
-    mobile: {
-        type: Number,
-        default: null
-    },
+    addressLine: String,
+    city: String,
+    state: String,
+    pinCode: String,
+    country: String,
+    mobile: Number,
     status: {
         type: Boolean,
         default: true

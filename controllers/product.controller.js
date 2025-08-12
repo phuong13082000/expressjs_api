@@ -37,7 +37,7 @@ export const createProductController = async (req, res) => {
 
         return res.json({
             success: true,
-            message: "Product Created Successfully",
+            message: '',
         })
 
     } catch (error) {
@@ -70,10 +70,14 @@ export const getProductController = async (req, res) => {
 
         const [data, totalCount] = await Promise.all([
             ProductModel.find(query)
+                .select('-createdAt -updatedAt -__v')
                 .sort({createdAt: -1})
                 .skip(skip)
                 .limit(limit)
-                .populate('category'),
+                .populate({
+                    path: 'category',
+                    select: '-createdAt -updatedAt -parent -__v',
+                }),
             ProductModel.countDocuments(query)
         ])
 
@@ -84,7 +88,7 @@ export const getProductController = async (req, res) => {
                 totalCount: totalCount,
                 totalNoPage: Math.ceil(totalCount / limit),
             },
-            message: "Product data",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -110,7 +114,7 @@ export const getProductByCategory = async (req, res) => {
         return res.json({
             success: true,
             data: product,
-            message: "Category product list",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -129,7 +133,7 @@ export const getProductDetails = async (req, res) => {
         return res.json({
             success: true,
             data: product,
-            message: "product details",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -154,7 +158,7 @@ export const updateProductDetails = async (req, res) => {
 
         return res.json({
             success: true,
-            message: "updated successfully",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -179,7 +183,7 @@ export const deleteProductDetails = async (req, res) => {
 
         return res.json({
             success: true,
-            message: "Delete successfully",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({
@@ -211,10 +215,14 @@ export const searchProduct = async (req, res) => {
 
         const [data, dataCount] = await Promise.all([
             ProductModel.find(query)
+                .select('-createdAt -updatedAt -__v')
                 .sort({createdAt: -1})
                 .skip(skip)
                 .limit(limit)
-                .populate('category'),
+                .populate({
+                    path: 'category',
+                    select: '-createdAt -updatedAt -parent -__v',
+                }),
             ProductModel.countDocuments(query)
         ])
 
@@ -227,7 +235,7 @@ export const searchProduct = async (req, res) => {
                 page: page,
                 limit: limit,
             },
-            message: "Product data",
+            message: '',
         })
     } catch (error) {
         return res.status(500).json({

@@ -425,7 +425,11 @@ export async function userDetailsController(req, res) {
     try {
         const userId = req.userId
         const user = await UserModel.findById(userId)
-            .select("-password -createdAt -updatedAt")
+            .populate({
+                path: 'addressDetails',
+                select: '-createdAt -updatedAt -userId -__v',
+            })
+            .select("-password -createdAt -updatedAt -__v")
 
         if(!user) {
             return res.status(401).json({

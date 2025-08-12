@@ -5,7 +5,7 @@ export const getAddressController = async (req, res) => {
     try {
         const userId = req.userId
         const data = await AddressModel.find({userId: userId})
-            .select("-userId -createdAt -updatedAt")
+            .select("-userId -createdAt -updatedAt -__v")
             .sort({createdAt: -1})
 
         return res.json({
@@ -59,9 +59,9 @@ export const addAddressController = async (req, res) => {
 export const updateAddressController = async (req, res) => {
     try {
         const userId = req.userId
-        const {_id, addressLine, city, state, country, pinCode, mobile} = req.body
+        const {id, addressLine, city, state, country, pinCode, mobile} = req.body
 
-        await AddressModel.updateOne({_id: _id, userId: userId}, {
+        await AddressModel.updateOne({_id: id, userId: userId}, {
             addressLine,
             city,
             state,
