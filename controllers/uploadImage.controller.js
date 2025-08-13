@@ -21,7 +21,7 @@ export class UploadController {
                 },
                 message: "Upload done"
             })
-        } catch (error) {
+        } catch (e) {
             console.log(e);
             res.status(500).json({
                 success: false,

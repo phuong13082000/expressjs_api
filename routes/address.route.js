@@ -1,19 +1,24 @@
 import {Router} from 'express'
-import {
-    addAddressController,
-    deleteAddressController,
-    getAddressController,
-    updateAddressController
-} from '../controllers/address.controller.js'
+import {AddressController} from '../controllers/address.controller.js'
 import authMiddleware from "../middleware/auth.middleware.js";
 import {validateMiddleware} from "../middleware/validate.middleware.js";
 import {createAddressSchema, updateAddressSchema} from "../schemas/address.schema.js";
 
-const addressRouter = Router()
+export class AddressRoutes {
+    constructor() {
+        this.router = Router()
+        this.registerRoutes()
+    }
 
-addressRouter.get("/get", authMiddleware, getAddressController)
-addressRouter.post('/add', authMiddleware, validateMiddleware(createAddressSchema), addAddressController)
-addressRouter.put('/update', authMiddleware, validateMiddleware(updateAddressSchema), updateAddressController)
-addressRouter.delete("/disable", authMiddleware, deleteAddressController)
+    registerRoutes() {
+        this.router.use(authMiddleware);
+        this.router.get("/get", AddressController.get)
+        this.router.post('/add', validateMiddleware(createAddressSchema), AddressController.add)
+        this.router.put('/update', validateMiddleware(updateAddressSchema), AddressController.update)
+        this.router.delete("/disable", AddressController.delete)
+    }
 
-export default addressRouter
+    getRouter() {
+        return this.router
+    }
+}

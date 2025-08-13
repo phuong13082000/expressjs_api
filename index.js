@@ -9,7 +9,7 @@ import {fileURLToPath} from "url";
 
 import connectDb from "./configs/connectDb.js";
 import categoryRouter from "./routes/category.route.js";
-import addressRouter from "./routes/address.route.js";
+import {AddressRoutes} from "./routes/address.route.js";
 import {UploadRoutes} from "./routes/upload.route.js";
 import productRouter from "./routes/product.route.js";
 import cartRouter from "./routes/cart.route.js";
@@ -39,9 +39,10 @@ app.use(express.static(path.join(_dirname, "public")));
 
 const userRouter = new UserRoutes();
 const uploadRouter = new UploadRoutes();
+const addressRouter = new AddressRoutes();
 
 app.use('/api/v1/user', userRouter.getRouter())
-app.use('/api/v1/address', addressRouter)
+app.use('/api/v1/address', addressRouter.getRouter())
 app.use('/api/v1/category', categoryRouter)
 app.use('/api/v1/file', uploadRouter.getRouter())
 app.use('/api/v1/product', productRouter)
