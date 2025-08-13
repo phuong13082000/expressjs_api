@@ -8,12 +8,12 @@ import path from "path";
 import {fileURLToPath} from "url";
 
 import connectDb from "./configs/connectDb.js";
-import categoryRouter from "./routes/category.route.js";
+import {CategoryRoutes} from "./routes/category.route.js";
 import {AddressRoutes} from "./routes/address.route.js";
 import {UploadRoutes} from "./routes/upload.route.js";
-import productRouter from "./routes/product.route.js";
-import cartRouter from "./routes/cart.route.js";
-import orderRouter from "./routes/order.route.js";
+import {ProductRoutes} from "./routes/product.route.js";
+import {CartRoutes} from "./routes/cart.route.js";
+import {OrderRoutes} from "./routes/order.route.js";
 import {UserRoutes} from "./routes/user.route.js";
 
 dotenv.config();
@@ -40,14 +40,18 @@ app.use(express.static(path.join(_dirname, "public")));
 const userRouter = new UserRoutes();
 const uploadRouter = new UploadRoutes();
 const addressRouter = new AddressRoutes();
+const cartRouter = new CartRoutes();
+const orderRouter = new OrderRoutes();
+const productRouter = new ProductRoutes();
+const categoryRouter = new CategoryRoutes();
 
 app.use('/api/v1/user', userRouter.getRouter())
 app.use('/api/v1/address', addressRouter.getRouter())
-app.use('/api/v1/category', categoryRouter)
+app.use('/api/v1/category', categoryRouter.getRouter())
 app.use('/api/v1/file', uploadRouter.getRouter())
-app.use('/api/v1/product', productRouter)
-app.use('/api/v1/cart', cartRouter)
-app.use('/api/v1/order', orderRouter)
+app.use('/api/v1/product', productRouter.getRouter())
+app.use('/api/v1/cart', cartRouter.getRouter())
+app.use('/api/v1/order', orderRouter.getRouter())
 
 connectDb().then(() => {
     app.listen(port, () => console.log("Server running on http://localhost:" + port))

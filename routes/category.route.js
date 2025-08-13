@@ -1,19 +1,25 @@
 import {Router} from 'express'
-import {
-    addCategoryController,
-    deleteCategoryController,
-    getCategoryController,
-    updateCategoryController
-} from '../controllers/category.controller.js'
 import authMiddleware from "../middleware/auth.middleware.js";
 import {validateMiddleware} from "../middleware/validate.middleware.js";
 import {createCategorySchema, updateCategorySchema} from "../schemas/category.schema.js";
+import {CategoryController} from "../controllers/category.controller.js";
 
-const categoryRouter = Router()
+export class CategoryRoutes {
+    constructor() {
+        this.router = Router()
+        this.registerRoutes()
+    }
 
-categoryRouter.get('/get', getCategoryController)
-categoryRouter.post("/add", validateMiddleware(createCategorySchema), authMiddleware, addCategoryController)
-categoryRouter.put('/update', validateMiddleware(updateCategorySchema), authMiddleware, updateCategoryController)
-categoryRouter.delete("/delete", authMiddleware, deleteCategoryController)
+    registerRoutes() {
+        this.router.get('/get', CategoryController.get);
 
-export default categoryRouter
+        this.router.use(authMiddleware)
+        this.router.post("/add", validateMiddleware(createCategorySchema), CategoryController.create);
+        this.router.put('/update', validateMiddleware(updateCategorySchema), CategoryController.update)
+        this.router.delete("/delete", CategoryController.delete);
+    }
+
+    getRouter() {
+        return this.router
+    }
+}

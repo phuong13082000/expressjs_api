@@ -1,124 +1,130 @@
 import UserModel from "../models/user.model.js";
 import CartModel from "../models/cart.model.js";
 
-export const addCartController = async (req, res) => {
-    try {
-        const userId = req.userId
-        const {productId} = req.body
+export class CartController {
+    static async get(req, res) {
+        try {
+            const userId = req.userId
 
-        if (!productId) {
-            return res.status(402).json({
-                message: "Provide productId",
-                success: false
+            const cartItem = await CartModel.find({userId: userId})
+                .populate('productId')
+
+            return res.json({
+                success: true,
+                data: cartItem,
+                message: "list cart item",
             })
-        }
-
-        const checkItemCart = await CartModel.findOne({
-            userId: userId,
-            productId: productId
-        })
-
-        if (checkItemCart) {
-            return res.status(400).json({
+        } catch (e) {
+            console.log(e);
+            res.status(500).json({
                 success: false,
-                message: "Item already in cart"
-            })
+                message: "Some error occurred",
+            });
         }
+    }
 
-        const cartItem = new CartModel({
-            quantity: 1,
-            userId: userId,
-            productId: productId
-        })
+    static async create(req, res) {
+        try {
+            const userId = req.userId
+            const {productId} = req.body
 
-        await cartItem.save()
-
-        await UserModel.updateOne({_id: userId}, {
-            $push: {
-                shopping_cart: productId
+            if (!productId) {
+                return res.status(402).json({
+                    message: "Provide productId",
+                    success: false
+                })
             }
-        })
 
-        return res.json({
-            success: true,
-            message: "Item add successfully",
-        })
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message || error,
-        })
-    }
-}
-
-export const getCartController = async (req, res) => {
-    try {
-        const userId = req.userId
-
-        const cartItem = await CartModel.find({userId: userId}).populate('productId')
-
-        return res.json({
-            success: true,
-            data: cartItem,
-            message: "list cart item",
-        })
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message || error,
-        })
-    }
-}
-
-export const updateCartController = async (req, res) => {
-    try {
-        const userId = req.userId
-        const {_id, qty} = req.body
-
-        if (!_id || !qty) {
-            return res.status(400).json({
-                success: false,
-                message: "provide _id, qty"
+            const checkItemCart = await CartModel.findOne({
+                userId: userId,
+                productId: productId
             })
-        }
 
-        await CartModel.updateOne({_id: _id, userId: userId}, {quantity: qty})
+            if (checkItemCart) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Item already in cart"
+                })
+            }
 
-        return res.json({
-            success: true,
-            message: "Update cart",
-        })
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message || error,
-        })
-    }
-}
-
-export const deleteCartController = async (req, res) => {
-    try {
-        const userId = req.userId
-        const {_id} = req.body
-
-        if (!_id) {
-            return res.status(400).json({
-                success: false,
-                message: "Provide _id",
+            const cartItem = new CartModel({
+                quantity: 1,
+                userId: userId,
+                productId: productId
             })
+
+            await cartItem.save()
+
+            await UserModel.updateOne({_id: userId}, {
+                $push: {
+                    shopping_cart: productId
+                }
+            })
+
+            return res.json({
+                success: true,
+                message: "Item add successfully",
+            })
+        } catch (e) {
+            console.log(e);
+            res.status(500).json({
+                success: false,
+                message: "Some error occurred",
+            });
         }
+    }
 
-        await CartModel.deleteOne({_id: _id, userId: userId})
+    static async update(req, res) {
+        try {
+            const userId = req.userId
+            const {_id, qty} = req.body
 
-        return res.json({
-            success: true,
-            message: "Item remove",
-        })
+            if (!_id || !qty) {
+                return res.status(400).json({
+                    success: false,
+                    message: "provide _id, qty"
+                })
+            }
 
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message || error,
-        })
+            await CartModel.updateOne({_id: _id, userId: userId}, {quantity: qty})
+
+            return res.json({
+                success: true,
+                message: "Update cart",
+            })
+        } catch (e) {
+            console.log(e);
+            res.status(500).json({
+                success: false,
+                message: "Some error occurred",
+            });
+        }
+    }
+
+    static async delete(req, res) {
+        try {
+            const userId = req.userId
+            const {_id} = req.body
+
+            if (!_id) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Provide _id",
+                })
+            }
+
+            await CartModel.deleteOne({_id: _id, userId: userId})
+
+            return res.json({
+                success: true,
+                message: "Item remove",
+            })
+        } catch (e) {
+            console.log(e);
+            res.status(500).json({
+                success: false,
+                message: "Some error occurred",
+            });
+        }
     }
 }

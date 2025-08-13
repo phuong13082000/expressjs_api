@@ -6,7 +6,7 @@ const orderSchema = new mongoose.Schema({
         required: [true, "Provide orderId"],
         unique: true
     },
-    product_details: {
+    productDetails: {
         name: String,
         image: Array,
     },
@@ -26,7 +26,7 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    invoice_receipt: {
+    invoiceReceipt: {
         type: String,
         default: null
     },

@@ -1,18 +1,23 @@
 import {Router} from 'express'
-import {
-    cashOnDeliveryOrderController,
-    getOrderDetailsController,
-    paymentController,
-    webhookStripe
-} from '../controllers/order.controller.js'
 import authMiddleware from "../middleware/auth.middleware.js";
+import {OrderController} from "../controllers/order.controller.js";
 
-const orderRouter = Router()
+export class OrderRoutes {
+    constructor() {
+        this.router = Router()
+        this.registerRoutes()
+    }
 
-orderRouter.get("/order-list", authMiddleware, getOrderDetailsController)
+    registerRoutes() {
+        this.router.post('/webhook', OrderController.webhookStripe);
 
-orderRouter.post("/cash-on-delivery", authMiddleware, cashOnDeliveryOrderController)
-orderRouter.post('/checkout', authMiddleware, paymentController)
-orderRouter.post('/webhook', webhookStripe)
+        this.router.use(authMiddleware);
+        this.router.get("/order-list", OrderController.get)
+        this.router.post("/cash-on-delivery", OrderController.create);
+        this.router.post('/checkout-stripe', OrderController.paymentStripe)
+    }
 
-export default orderRouter
+    getRouter() {
+        return this.router
+    }
+}

@@ -1,28 +1,30 @@
 import {Router} from 'express'
-import {
-    createProductController,
-    deleteProductDetails,
-    favoriteProduct,
-    getProductByCategory,
-    getProductController,
-    getProductDetails,
-    searchProduct,
-    updateProductDetails
-} from '../controllers/product.controller.js'
 import authMiddleware from "../middleware/auth.middleware.js";
 import adminMiddleware from "../middleware/admin.middleware.js";
+import {ProductController} from "../controllers/product.controller.js";
 
-const productRouter = Router()
+export class ProductRoutes {
+    constructor() {
+        this.router = Router()
+        this.registerRoutes()
+    }
 
-productRouter.post('/get', getProductController)
-productRouter.post("/get-product-by-category", getProductByCategory)
-productRouter.post('/get-product-details', getProductDetails)
-productRouter.post('/search-product', searchProduct)
-productRouter.post("/create", authMiddleware, adminMiddleware, createProductController)
-productRouter.post("/favorite/:id", authMiddleware, favoriteProduct)
+    registerRoutes() {
+        this.router.post('/get', ProductController.get)
+        this.router.post("/get-product-by-category", ProductController.getByCategory)
+        this.router.post('/get-product-details', ProductController.detail)
+        this.router.post('/search-product', ProductController.search)
 
-productRouter.put('/update-product-details', authMiddleware, adminMiddleware, updateProductDetails)
+        this.router.use(authMiddleware)
+        this.router.post("/favorite/:id", ProductController.favorite)
 
-productRouter.delete('/delete-product', authMiddleware, adminMiddleware, deleteProductDetails)
+        this.router.use(adminMiddleware)
+        this.router.post("/create", ProductController.create);
+        this.router.put('/update', ProductController.update);
+        this.router.delete('/delete', ProductController.delete);
+    }
 
-export default productRouter
+    getRouter() {
+        return this.router
+    }
+}
