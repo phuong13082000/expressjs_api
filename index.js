@@ -10,7 +10,7 @@ import {fileURLToPath} from "url";
 import connectDb from "./configs/connectDb.js";
 import categoryRouter from "./routes/category.route.js";
 import addressRouter from "./routes/address.route.js";
-import uploadRouter from "./routes/upload.route.js";
+import {UploadRoutes} from "./routes/upload.route.js";
 import productRouter from "./routes/product.route.js";
 import cartRouter from "./routes/cart.route.js";
 import orderRouter from "./routes/order.route.js";
@@ -20,6 +20,7 @@ dotenv.config();
 
 const port = process.env.PORT || 3000;
 const app = express()
+const _dirname = path.dirname(fileURLToPath(import.meta.url))
 
 app.use(cors({
     credentials: true,
@@ -34,24 +35,19 @@ app.use(helmet({
     // hidePoweredBy: false,
     // xssFilter: false,
 }))
-app.use(express.static(
-    path.join(path.dirname(fileURLToPath(import.meta.url)), "public")
-));
+app.use(express.static(path.join(_dirname, "public")));
 
 const userRouter = new UserRoutes();
+const uploadRouter = new UploadRoutes();
 
 app.use('/api/v1/user', userRouter.getRouter())
 app.use('/api/v1/address', addressRouter)
 app.use('/api/v1/category', categoryRouter)
-app.use('/api/v1/file', uploadRouter)
+app.use('/api/v1/file', uploadRouter.getRouter())
 app.use('/api/v1/product', productRouter)
 app.use('/api/v1/cart', cartRouter)
 app.use('/api/v1/order', orderRouter)
 
 connectDb().then(() => {
-    app.listen(port, () => {
-        console.log("Server running on http://localhost:" + port)
-    })
+    app.listen(port, () => console.log("Server running on http://localhost:" + port))
 })
-
-export default app;

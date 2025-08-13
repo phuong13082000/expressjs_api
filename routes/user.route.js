@@ -1,9 +1,9 @@
 import {Router} from 'express'
 import authMiddleware from '../middleware/auth.middleware.js'
-import {uploadMiddlewareAvatar} from "../utils/uploadImageLocal.js";
 import {validateMiddleware} from "../middleware/validate.middleware.js";
 import {loginSchema, registerSchema} from "../schemas/user.schema.js";
 import {UserController} from "../controllers/user.controller.js";
+import {uploadMiddlewareAvatar} from "../middleware/upload.middleware.js";
 
 export class UserRoutes {
     constructor() {

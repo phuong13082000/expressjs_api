@@ -4,8 +4,8 @@ import jwt from 'jsonwebtoken'
 import {OAuth2Client} from "google-auth-library";
 
 import UserModel from '../models/user.model.js'
-import {saveImage} from "../utils/uploadImageLocal.js";
 import generateToken from "../utils/generateToken.js";
+import {saveImage} from "../middleware/upload.middleware.js";
 
 dotenv.config();
 
@@ -181,7 +181,7 @@ export class UserController {
             const userId = req.userId
             const image = req.file
 
-            const upload = saveImage(image)
+            const upload = await saveImage(image)
 
             await UserModel.findByIdAndUpdate(userId, {avatar: upload})
 

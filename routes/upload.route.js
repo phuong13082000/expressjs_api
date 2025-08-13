@@ -1,10 +1,19 @@
 import {Router} from 'express'
-import uploadImageController from '../controllers/uploadImage.controller.js'
-import {uploadMiddlewareImage} from "../utils/uploadImageLocal.js";
+import {UploadController} from '../controllers/uploadImage.controller.js'
 import authMiddleware from "../middleware/auth.middleware.js";
+import {uploadMiddlewareImage} from "../middleware/upload.middleware.js";
 
-const uploadRouter = Router()
+export class UploadRoutes {
+    constructor() {
+        this.router = Router()
+        this.registerRoutes()
+    }
 
-uploadRouter.post("/upload", authMiddleware, uploadMiddlewareImage, uploadImageController)
+    registerRoutes() {
+        this.router.post('/upload', authMiddleware, uploadMiddlewareImage, UploadController.image);
+    }
 
-export default uploadRouter
+    getRouter() {
+        return this.router
+    }
+}

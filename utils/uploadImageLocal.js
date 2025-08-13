@@ -1,41 +1,53 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import {fileURLToPath} from 'url';
+import { fileURLToPath } from "url";
 
-const upload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|webp/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export class UploadService {
+    constructor() {
+        this.allowedTypes = /jpeg|jpg|png|gif|webp/;
+        this.upload = multer({
+            storage: multer.memoryStorage(),
+            fileFilter: (req, file, cb) => this.fileFilter(req, file, cb)
+        });
+    }
+
+    fileFilter(req, file, cb) {
+        const extname = this.allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = this.allowedTypes.test(file.mimetype);
 
         if (extname && mimetype) {
-            return cb(null, true);
+            cb(null, true);
         } else {
-            cb("Error: Images Only!");
+            cb(new Error("Images Only!"));
         }
     }
-});
 
-export const saveImage = (file, folder = 'images') => {
-    if(!file) return null;
-
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
-    const dirPath = path.join(path.dirname(fileURLToPath(import.meta.url)), `../public/${folder}`);
-    const filePath = path.join(dirPath, filename);
-
-    if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, {recursive: true});
+    single(fieldName) {
+        return this.upload.single(fieldName);
     }
 
-    fs.writeFileSync(filePath, file.buffer);
+    multiple(fieldName, maxCount) {
+        return this.upload.array(fieldName, maxCount);
+    }
 
-    return `${process.env.SERVER_URL}/${folder}/${filename}`;
+    async saveImage(file, folder = "images") {
+        if (!file) return null;
+
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const filename = `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`;
+        const dirPath = path.join(__dirname, `../public/${folder}`);
+        const filePath = path.join(dirPath, filename);
+
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+
+        await fs.promises.writeFile(filePath, file.buffer);
+
+        const baseUrl = process.env.SERVER_URL?.replace(/\/$/, "");
+        return `${baseUrl}/${folder}/${filename}`;
+    }
 }
-
-export const uploadMiddlewareAvatar = upload.single("avatar");
-export const uploadMiddlewareImage = upload.single("image");
-
-export default upload
