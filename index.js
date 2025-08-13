@@ -8,13 +8,13 @@ import path from "path";
 import {fileURLToPath} from "url";
 
 import connectDb from "./configs/connectDb.js";
-import userRouter from "./routes/user.route.js";
 import categoryRouter from "./routes/category.route.js";
 import addressRouter from "./routes/address.route.js";
 import uploadRouter from "./routes/upload.route.js";
 import productRouter from "./routes/product.route.js";
 import cartRouter from "./routes/cart.route.js";
 import orderRouter from "./routes/order.route.js";
+import {UserRoutes} from "./routes/user.route.js";
 
 dotenv.config();
 
@@ -38,7 +38,9 @@ app.use(express.static(
     path.join(path.dirname(fileURLToPath(import.meta.url)), "public")
 ));
 
-app.use('/api/v1/user', userRouter)
+const userRouter = new UserRoutes();
+
+app.use('/api/v1/user', userRouter.getRouter())
 app.use('/api/v1/address', addressRouter)
 app.use('/api/v1/category', categoryRouter)
 app.use('/api/v1/file', uploadRouter)
@@ -51,3 +53,5 @@ connectDb().then(() => {
         console.log("Server running on http://localhost:" + port)
     })
 })
+
+export default app;

@@ -1,40 +1,45 @@
 import {Router} from 'express'
-import {
-    forgotPasswordController,
-    googleLoginController,
-    loginController,
-    logoutController,
-    refreshTokenController,
-    registerController,
-    resetPasswordController,
-    updateDetailsController,
-    uploadAvatarController,
-    userDetailsController,
-    verifyEmailController,
-    verifyForgotPasswordOtpController,
-    deactivateUserController
-} from '../controllers/user.controller.js'
 import authMiddleware from '../middleware/auth.middleware.js'
 import {uploadMiddlewareAvatar} from "../utils/uploadImageLocal.js";
 import {validateMiddleware} from "../middleware/validate.middleware.js";
 import {loginSchema, registerSchema} from "../schemas/user.schema.js";
+import {UserController} from "../controllers/user.controller.js";
 
-const userRouter = Router()
+export class UserRoutes {
+    constructor() {
+        this.router = Router()
+        this.registerRoutes()
+    }
 
-userRouter.get('/user-details', authMiddleware, userDetailsController)
+    registerRoutes() {
+        this.authRoutes()
+        this.profileRoutes()
+        this.passwordRoutes()
+    }
 
-userRouter.post('/register', validateMiddleware(registerSchema), registerController)
-userRouter.post('/verify-email', verifyEmailController)
-userRouter.post('/login', validateMiddleware(loginSchema), loginController)
-userRouter.post('/refresh-token', refreshTokenController)
-userRouter.post('/login-google', googleLoginController)
-userRouter.post('/logout', authMiddleware, logoutController)
-userRouter.post('/deactivate', authMiddleware, deactivateUserController)
+    authRoutes() {
+        this.router.post('/register', validateMiddleware(registerSchema), UserController.register);
+        this.router.post('/verify-email', UserController.verifyEmail);
+        this.router.post('/login', validateMiddleware(loginSchema), UserController.login);
+        this.router.post('/refresh-token', UserController.refreshToken);
+        this.router.post('/login-google', UserController.googleLogin);
+        this.router.post('/logout', authMiddleware, UserController.logout);
+        this.router.post('/deactivate', authMiddleware, UserController.deactivate);
+    }
 
-userRouter.put('/upload-avatar', authMiddleware, uploadMiddlewareAvatar, uploadAvatarController)
-userRouter.put('/update-user', authMiddleware, updateDetailsController)
-userRouter.put('/forgot-password', forgotPasswordController)
-userRouter.put('/verify-forgot-password-otp', verifyForgotPasswordOtpController)
-userRouter.put('/reset-password', resetPasswordController)
+    profileRoutes() {
+        this.router.get('/user-details', authMiddleware, UserController.userDetails);
+        this.router.put('/upload-avatar', authMiddleware, uploadMiddlewareAvatar, UserController.uploadAvatar);
+        this.router.put('/update-user', authMiddleware, UserController.updateDetails)
+    }
 
-export default userRouter
+    passwordRoutes() {
+        this.router.put('/forgot-password', UserController.forgotPassword);
+        this.router.put('/verify-forgot-password-otp', UserController.verifyForgotPasswordOtp)
+        this.router.put('/reset-password', UserController.resetPassword);
+    }
+
+    getRouter() {
+        return this.router
+    }
+}
