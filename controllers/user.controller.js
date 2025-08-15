@@ -418,10 +418,24 @@ export class UserController {
             const userId = req.userId
 
             const user = await UserModel.findById(userId)
+                .select("-password -createdAt -updatedAt -__v")
                 .populate({
                     path: 'addressDetails',
                     select: '-createdAt -updatedAt -userId -__v',
-                }).populate({
+                })
+                .populate({
+                    path: 'shoppingCart',
+                    select: '-createdAt -updatedAt -userId -__v',
+                    populate: {
+                        path: 'products',
+                        select: '-createdAt -updatedAt -__v',
+                        populate: {
+                            path: 'category',
+                            select: '-createdAt -updatedAt -__v -parent',
+                        }
+                    }
+                })
+                .populate({
                     path: 'favoriteProduct',
                     select: '-createdAt -updatedAt -__v',
                     populate: {
@@ -429,7 +443,6 @@ export class UserController {
                         select: '-createdAt -updatedAt -parent -__v',
                     }
                 })
-                .select("-password -createdAt -updatedAt -__v")
 
             if (!user) {
                 return res.status(401).json({

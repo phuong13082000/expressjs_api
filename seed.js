@@ -76,7 +76,7 @@ function scanAllProducts(root) {
                 const images = fs.readdirSync(prodPath)
                     .filter(f => imageExtensions.includes(path.extname(f).toLowerCase()))
                     .map(file => ({
-                        src: buildImagePath(`${cat.name}/${sub.name}`, file),
+                        src: buildImagePath(`product/${cat.name}/${sub.name}/${prod.name}`, file),
                         alt: slugify(path.basename(file, path.extname(file)), { lower: true, strict: true }),
                     }));
 

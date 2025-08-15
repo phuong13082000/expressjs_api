@@ -7,12 +7,20 @@ export class CartController {
             const userId = req.userId
 
             const cartItem = await CartModel.find({userId: userId})
-                .populate('productId')
+                .select('-userId -__v -createdAt -updatedAt')
+                .populate({
+                    path: 'products',
+                    select: '-createdAt -updatedAt -__v',
+                    populate: {
+                        path: 'category',
+                        select: '-createdAt -updatedAt -parent -__v',
+                    }
+                })
 
             return res.json({
                 success: true,
                 data: cartItem,
-                message: "list cart item",
+                message: '',
             })
         } catch (e) {
             console.log(e);
@@ -50,14 +58,14 @@ export class CartController {
             const cartItem = new CartModel({
                 quantity: 1,
                 userId: userId,
-                productId: productId
+                products: productId
             })
 
             await cartItem.save()
 
             await UserModel.updateOne({_id: userId}, {
                 $push: {
-                    shopping_cart: productId
+                    shoppingCart: cartItem._id
                 }
             })
 
@@ -114,6 +122,10 @@ export class CartController {
             }
 
             await CartModel.deleteOne({_id: _id, userId: userId})
+
+            await UserModel.findByIdAndUpdate(userId, {
+                $pull: {shoppingCart: _id}
+            });
 
             return res.json({
                 success: true,

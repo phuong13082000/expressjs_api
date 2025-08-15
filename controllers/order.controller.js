@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import OrderModel from "../models/order.model.js";
 import UserModel from "../models/user.model.js";
 import CartModel from "../models/cart.model.js";
-import {Stripe} from "stripe";
+import Stripe from "../configs/stripe.js";
 
 export class OrderController {
     static async get(req, res) {
@@ -71,22 +71,35 @@ export class OrderController {
     static async paymentStripe(req, res) {
         try {
             const userId = req.userId
-            const {listItems, totalAmt, addressId, subTotalAmt} = req.body
+            const {listItems, addressId} = req.body
+
+            if (!Array.isArray(listItems) || listItems.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "No items to purchase"
+                });
+            }
 
             const user = await UserModel.findById(userId)
+                .populate({
+                    path: 'shoppingCart',
+                    populate: {
+                        path: 'products',
+                    }
+                });
 
-            const line_items = listItems.map(item => {
+            const line_items = user.shoppingCart.map(item => {
+                const product = item.products;
+
                 return {
                     price_data: {
                         currency: 'USD',
                         product_data: {
-                            name: item.productId.name,
-                            images: item.productId.image,
-                            metadata: {
-                                productId: item.productId._id
-                            }
+                            name: product.name,
+                            // images: [product.images[0]],
+                            metadata: {productId: product._id.toString()}
                         },
-                        unit_amount: priceWithDiscount(item.productId.price, item.productId.discount) * 100
+                        unit_amount: priceWithDiscount(product.price, product.discount) * 100
                     },
                     adjustable_quantity: {
                         enabled: true,
@@ -102,8 +115,8 @@ export class OrderController {
                 payment_method_types: ['card'],
                 customer_email: user.email,
                 metadata: {
-                    userId: userId,
-                    addressId: addressId
+                    userId: userId.toString(),
+                    addressId: addressId?.toString(),
                 },
                 line_items: line_items,
                 success_url: `${process.env.FRONTEND_URL}/success`,
@@ -136,7 +149,7 @@ export class OrderController {
                         userId: userId,
                         addressId: session.metadata.addressId,
                         paymentId: session.payment_intent,
-                        paymentStatus: session.payment_status,
+                        payment_status: session.payment_status,
                     })
 
                 const order = await OrderModel.insertMany(orderProduct)

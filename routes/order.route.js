@@ -9,7 +9,7 @@ export class OrderRoutes {
     }
 
     registerRoutes() {
-        this.router.post('/webhook', OrderController.webhookStripe);
+        this.router.post('/webhook-stripe', OrderController.webhookStripe);
 
         this.router.use(authMiddleware);
         this.router.get("/order-list", OrderController.get)
