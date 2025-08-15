@@ -4,119 +4,47 @@ import UserModel from "../models/user.model.js";
 export class ProductController {
     static async get(req, res) {
         try {
-            let { page, limit, search } = req.body
+            let { page, limit, search, category } = req.query
 
-            if (!page || page < 0) {
-                page = 1
+            page = parseInt(page) > 0 ? parseInt(page) : 1;
+            limit = parseInt(limit) > 0 && parseInt(limit) <= 20 ? parseInt(limit) : 10;
+
+            const skip = (page - 1) * limit;
+
+            const query = {};
+
+            if (search) {
+                query.$text = { $search: search };
             }
 
-            if (!limit || limit < 0 || limit > 20) {
-                limit = 10
+            if (category) {
+                query.category = Array.isArray(category) ? { $in: category } : category;
             }
-
-            const query = search ? { $text: { $search: search } } : {}
-
-            const skip = (page - 1) * limit
 
             const [data, totalCount] = await Promise.all([
                 ProductModel.find(query)
-                    .select('-createdAt -updatedAt -__v')
+                    .select("-createdAt -updatedAt -__v")
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(limit)
                     .populate({
-                        path: 'category',
-                        select: '-createdAt -updatedAt -parent -__v',
+                        path: "category",
+                        select: "-createdAt -updatedAt -parent -__v",
                     }),
                 ProductModel.countDocuments(query)
-            ])
+            ]);
 
             return res.json({
                 success: true,
                 data,
-                totalCount: totalCount,
-                totalNoPage: Math.ceil(totalCount / limit),
-                message: '',
-            })
-        } catch (e) {
-            console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
+                page,
+                limit,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                message: ''
             });
-        }
-    }
-
-    static async getByCategory(req, res) {
-        try {
-            const { id } = req.body
-
-            if (!id) {
-                return res.status(400).json({
-                    message: "provide category id",
-                    success: false
-                })
-            }
-
-            const product = await ProductModel.find({ category: { $in: id } })
-                .limit(15)
-
-            return res.json({
-                success: true,
-                data: product,
-                message: '',
-            })
         } catch (e) {
-            console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
-        }
-    }
-
-    static async search(req, res) {
-        try {
-            let { search, page, limit } = req.body
-
-            if (!page) {
-                page = 1
-            }
-
-            if (!limit) {
-                limit = 10
-            }
-
-            const query = search ? { $text: { $search: search } } : {}
-
-            const skip = (page - 1) * limit
-
-            const [data, dataCount] = await Promise.all([
-                ProductModel.find(query)
-                    .select('-createdAt -updatedAt -__v')
-                    .sort({ createdAt: -1 })
-                    .skip(skip)
-                    .limit(limit)
-                    .populate({
-                        path: 'category',
-                        select: '-createdAt -updatedAt -parent -__v',
-                    }),
-                ProductModel.countDocuments(query)
-            ])
-
-            return res.json({
-                success: true,
-                data: {
-                    data,
-                    totalCount: dataCount,
-                    totalPage: Math.ceil(dataCount / limit),
-                    page: page,
-                    limit: limit,
-                },
-                message: '',
-            })
-        } catch (e) {
-            console.log(e);
+            console.error(e);
             res.status(500).json({
                 success: false,
                 message: "Some error occurred",
@@ -126,9 +54,14 @@ export class ProductController {
 
     static async detail(req, res) {
         try {
-            const { productId } = req.body
+            const { id } = req.params
 
-            const product = await ProductModel.findOne({ _id: productId })
+            const product = await ProductModel.findOne({ _id: id })
+                .select("-createdAt -updatedAt -__v")
+                .populate({
+                    path: "category",
+                    select: "-createdAt -updatedAt -parent -__v",
+                })
 
             return res.json({
                 success: true,

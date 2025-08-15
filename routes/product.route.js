@@ -10,10 +10,8 @@ export class ProductRoutes {
     }
 
     registerRoutes() {
-        this.router.post('/get', ProductController.get)
-        this.router.post("/get-product-by-category", ProductController.getByCategory)
-        this.router.post('/get-product-details', ProductController.detail)
-        this.router.post('/search-product', ProductController.search)
+        this.router.get('/get', ProductController.get)
+        this.router.get('/detail/:id', ProductController.detail)
 
         this.router.use(authMiddleware)
         this.router.post("/favorite/:id", ProductController.favorite)
