@@ -1,10 +1,9 @@
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import slugify from "slugify";
 import fs from 'fs';
 import path from 'path';
 
-import connectDb from "./configs/connectDb.js";
+import Database from "./configs/connectDb.js";
 import CategoryModel from "./models/category.model.js";
 import ProductModel from "./models/product.model.js";
 
@@ -175,7 +174,7 @@ console.log('created file: products.json');
 
 async function main() {
     try {
-        await connectDb();
+        await Database.connect();
 
         await saveCategoryFromJson();
         console.log('Created categories!');
@@ -185,7 +184,7 @@ async function main() {
     } catch (err) {
         console.error('Error:', err);
     } finally {
-        await mongoose.disconnect();
+        await Database.disconnect();
         console.log('Disconnected from MongoDB');
     }
 }

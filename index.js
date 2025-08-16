@@ -6,8 +6,8 @@ import morgan from "morgan";
 import helmet from "helmet";
 import path from "path";
 import {fileURLToPath} from "url";
+import Database from "./configs/connectDb.js";
 
-import connectDb from "./configs/connectDb.js";
 import {CategoryRoutes} from "./routes/category.route.js";
 import {AddressRoutes} from "./routes/address.route.js";
 import {UploadRoutes} from "./routes/upload.route.js";
@@ -53,6 +53,6 @@ app.use('/api/v1/product', productRouter.getRouter())
 app.use('/api/v1/cart', cartRouter.getRouter())
 app.use('/api/v1/order', orderRouter.getRouter())
 
-connectDb().then(() => {
+Database.connect().then(() => {
     app.listen(port, () => console.log("Server running on http://localhost:" + port))
 })

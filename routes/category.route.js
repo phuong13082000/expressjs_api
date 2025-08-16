@@ -1,8 +1,8 @@
 import {Router} from 'express'
-import authMiddleware from "../middleware/auth.middleware.js";
 import {validateMiddleware} from "../middleware/validate.middleware.js";
-import {createCategorySchema, updateCategorySchema} from "../schemas/category.schema.js";
+import CategorySchema from "../schemas/category.schema.js";
 import {CategoryController} from "../controllers/category.controller.js";
+import adminMiddleware from "../middleware/admin.middleware.js";
 
 export class CategoryRoutes {
     constructor() {
@@ -13,9 +13,9 @@ export class CategoryRoutes {
     registerRoutes() {
         this.router.get('/get', CategoryController.get);
 
-        this.router.use(authMiddleware)
-        this.router.post("/add", validateMiddleware(createCategorySchema), CategoryController.create);
-        this.router.put('/update', validateMiddleware(updateCategorySchema), CategoryController.update)
+        this.router.use(adminMiddleware)
+        this.router.post("/add", validateMiddleware(CategorySchema.createCategorySchema), CategoryController.create);
+        this.router.put('/update', validateMiddleware(CategorySchema.updateCategorySchema), CategoryController.update)
         this.router.delete("/delete", CategoryController.delete);
     }
 

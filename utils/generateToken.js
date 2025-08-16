@@ -5,7 +5,7 @@ import UserModel from "../models/user.model.js";
 
 dotenv.config()
 
-class generateToken {
+class GenerateToken {
     access(userId) {
         return jwt.sign(
             {id: userId},
@@ -27,4 +27,4 @@ class generateToken {
     }
 }
 
-export default new generateToken();
+export default new GenerateToken();

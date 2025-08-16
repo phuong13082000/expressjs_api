@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import {OAuth2Client} from "google-auth-library";
 
 import UserModel from '../models/user.model.js'
-import generateToken from "../utils/generateToken.js";
+import GenerateToken from "../utils/generateToken.js";
 import {saveImage} from "../middleware/upload.middleware.js";
 
 dotenv.config();
@@ -107,8 +107,8 @@ export class UserController {
                 })
             }
 
-            const accessToken = generateToken.access(user._id)
-            const refreshToken = await generateToken.refresh(user._id)
+            const accessToken = GenerateToken.access(user._id)
+            const refreshToken = await GenerateToken.refresh(user._id)
 
             await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
 
@@ -387,7 +387,7 @@ export class UserController {
 
             const userId = verifyToken?._id
 
-            const newAccessToken = generateToken.access(userId)
+            const newAccessToken = GenerateToken.access(userId)
 
             const cookiesOption = {
                 httpOnly: true,
@@ -495,8 +495,8 @@ export class UserController {
                 });
             }
 
-            const accessToken = generateToken.access(user._id)
-            const refreshToken = await generateToken.refresh(user._id)
+            const accessToken = GenerateToken.access(user._id)
+            const refreshToken = await GenerateToken.refresh(user._id)
 
             await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
 
