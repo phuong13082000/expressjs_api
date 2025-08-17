@@ -12,9 +12,8 @@ export class OrderRoutes {
         this.router.post('/webhook-stripe', OrderController.webhookStripe);
 
         this.router.use(authMiddleware);
-        this.router.get("/order-list", OrderController.get)
-        this.router.post("/cash-on-delivery", OrderController.create);
-        this.router.post('/checkout-stripe', OrderController.paymentStripe)
+        this.router.get("/get", OrderController.get)
+        this.router.post("/create", OrderController.create);
     }
 
     getRouter() {

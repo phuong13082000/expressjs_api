@@ -6,7 +6,7 @@ import morgan from "morgan";
 import helmet from "helmet";
 import path from "path";
 import {fileURLToPath} from "url";
-import Database from "./configs/connectDb.js";
+import Database from "./configs/database.js";
 
 import {CategoryRoutes} from "./routes/category.route.js";
 import {AddressRoutes} from "./routes/address.route.js";

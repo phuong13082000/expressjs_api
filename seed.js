@@ -3,7 +3,7 @@ import slugify from "slugify";
 import fs from 'fs';
 import path from 'path';
 
-import Database from "./configs/connectDb.js";
+import Database from "./configs/database.js";
 import CategoryModel from "./models/category.model.js";
 import ProductModel from "./models/product.model.js";
 import CouponModel from "./models/coupon.model.js";
