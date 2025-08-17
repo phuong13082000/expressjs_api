@@ -6,17 +6,49 @@ import path from 'path';
 import Database from "./configs/connectDb.js";
 import CategoryModel from "./models/category.model.js";
 import ProductModel from "./models/product.model.js";
+import CouponModel from "./models/coupon.model.js";
 
 dotenv.config();
 
 const CATEGORY_PATH = './public/category';
 const SUB_CATEGORY_PATH = './public/sub-category';
-const PRODUCT_PATH = './public/product'
+const PRODUCT_PATH = './public/product';
+
+const CATEGORY_DATA = './data/categories';
+const PRODUCT_DATA = './data/products';
+
 const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
 
 const buildImagePath = (folder, filename) => {
     return `${process.env.SERVER_URL}/${folder}/${filename}`;
 };
+
+const coupons = [
+    {
+        code: "SALE10",
+        discountType: "percent",
+        discountValue: 10,
+        minOrderValue: 100,
+        usageLimit: 50,
+        expiresAt: new Date("2025-12-31"),
+    },
+    {
+        code: "SALE50",
+        discountType: "fixed",
+        discountValue: 50,
+        minOrderValue: 200,
+        usageLimit: 20,
+        expiresAt: new Date("2025-10-01"),
+    },
+    {
+        code: "FREESHIP",
+        discountType: "fixed",
+        discountValue: 30,
+        minOrderValue: 150,
+        usageLimit: 100,
+        expiresAt: new Date("2026-01-01"),
+    },
+];
 
 function scanAllCategories() {
     const categoryImages = fs.readdirSync(CATEGORY_PATH);
@@ -107,10 +139,14 @@ function scanAllProducts(root) {
 
 async function saveCategoryFromJson() {
     try {
+        const dataCategories = scanAllCategories();
+        fs.writeFileSync(CATEGORY_DATA, JSON.stringify(dataCategories, null, 2), 'utf-8');
+        console.log('created file: categories.json');
+
         await CategoryModel.deleteMany({});
 
         // Read JSON
-        const data = JSON.parse(fs.readFileSync('./data/categories.json', 'utf-8'));
+        const data = JSON.parse(fs.readFileSync(CATEGORY_DATA, 'utf-8'));
 
         for (const cat of data) {
             const parentDoc = await CategoryModel.create({
@@ -133,7 +169,7 @@ async function saveCategoryFromJson() {
                     icon: "fas fa-edit",
                     parent: parentDoc._id
                 });
-                console.log(`sub-category: ${sub.title}`);
+                console.log(`-sub-category: ${sub.title}`);
             }
         }
     } catch (err) {
@@ -143,10 +179,14 @@ async function saveCategoryFromJson() {
 
 async function saveProductFromJson() {
     try {
+        const dataProducts = scanAllProducts(PRODUCT_PATH);
+        fs.writeFileSync(PRODUCT_DATA, JSON.stringify(dataProducts, null, 2), 'utf-8');
+        console.log('created file: products.json');
+
         await ProductModel.deleteMany({});
 
         // Read JSON
-        const data = JSON.parse(fs.readFileSync('./data/products.json', 'utf-8'));
+        const data = JSON.parse(fs.readFileSync(PRODUCT_DATA, 'utf-8'));
 
         for (const item of data) {
             let categoryDoc = await CategoryModel.findOne({ title: item.category });
@@ -172,20 +212,12 @@ async function saveProductFromJson() {
             });
 
             await product.save();
-            console.log(`product: ${item.title}`);
+            console.log(`--product: ${item.title}`);
         }
     } catch (err) {
         console.error("error:", err);
     }
 }
-
-const dataCategories = scanAllCategories();
-fs.writeFileSync('./data/categories.json', JSON.stringify(dataCategories, null, 2), 'utf-8');
-console.log('created file: categories.json');
-
-const dataProducts = scanAllProducts(PRODUCT_PATH);
-fs.writeFileSync('./data/products.json', JSON.stringify(dataProducts, null, 2), 'utf-8');
-console.log('created file: products.json');
 
 async function main() {
     try {
@@ -196,6 +228,11 @@ async function main() {
 
         await saveProductFromJson();
         console.log('Created products!');
+
+        await CouponModel.deleteMany();
+        await CouponModel.insertMany(coupons);
+        console.log("Created coupon");
+
     } catch (err) {
         console.error('Error:', err);
     } finally {

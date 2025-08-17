@@ -15,6 +15,7 @@ import {ProductRoutes} from "./routes/product.route.js";
 import {CartRoutes} from "./routes/cart.route.js";
 import {OrderRoutes} from "./routes/order.route.js";
 import {UserRoutes} from "./routes/user.route.js";
+import {CouponRoutes} from "./routes/coupon.route.js";
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ const cartRouter = new CartRoutes();
 const orderRouter = new OrderRoutes();
 const productRouter = new ProductRoutes();
 const categoryRouter = new CategoryRoutes();
+const couponRouter = new CouponRoutes();
 
 app.use('/api/v1/user', userRouter.getRouter())
 app.use('/api/v1/address', addressRouter.getRouter())
@@ -52,6 +54,7 @@ app.use('/api/v1/file', uploadRouter.getRouter())
 app.use('/api/v1/product', productRouter.getRouter())
 app.use('/api/v1/cart', cartRouter.getRouter())
 app.use('/api/v1/order', orderRouter.getRouter())
+app.use('/api/v1/coupon', couponRouter.getRouter())
 
 Database.connect().then(() => {
     app.listen(port, () => console.log("Server running on http://localhost:" + port))

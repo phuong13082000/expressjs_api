@@ -14,10 +14,10 @@ const adminMiddleware = async (req, res, next) => {
         }
 
         next()
-    } catch (error) {
+    } catch (err) {
         return res.status(500).json({
             success: false,
-            message: "Permission denial"
+            message: `Permission denial: ${err}`
         })
     }
 }
