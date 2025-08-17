@@ -24,9 +24,9 @@ function scanAllCategories() {
 
     categoryImages.forEach(file => {
         const ext = path.extname(file);
-        const name = path.basename(file, ext);
-        const slug = slugify(name, { lower: true, strict: true });
-        const subCatFolder = path.join(SUB_CATEGORY_PATH, name);
+        const title = path.basename(file, ext);
+        const slug = slugify(title, { lower: true, strict: true });
+        const subCatFolder = path.join(SUB_CATEGORY_PATH, title);
 
         let subCategories = [];
 
@@ -39,16 +39,22 @@ function scanAllCategories() {
             subCategories = subImages.map(sub => {
                 const subName = path.basename(sub, path.extname(sub));
                 return {
-                    name: subName,
+                    title: subName,
                     slug: slugify(subName, { lower: true, strict: true }),
-                    image: buildImagePath(`sub-category/${name}`, sub)
+                    description: "",
+                    color: "#a569bd",
+                    icon: "fas fa-edit",
+                    image: buildImagePath(`sub-category/${title}`, sub)
                 };
             });
         }
 
         categories.push({
-            name,
-            slug,
+            title: title,
+            slug: slug,
+            description: "",
+            color: "#a569bd",
+            icon: "fas fa-edit",
             image: buildImagePath('category', file),
             subCategories
         });
@@ -80,7 +86,7 @@ function scanAllProducts(root) {
                     }));
 
                 products.push({
-                    name: prod.name,
+                    title: prod.name,
                     slug: slugify(prod.name, { lower: true, strict: true }),
                     images: images,
                     unit: 10,
@@ -108,20 +114,26 @@ async function saveCategoryFromJson() {
 
         for (const cat of data) {
             const parentDoc = await CategoryModel.create({
-                name: cat.name,
+                title: cat.title,
                 slug: cat.slug,
                 image: cat.image,
+                description: "",
+                color: "#a569bd",
+                icon: "fas fa-edit",
                 parent: null,
             });
-            console.log(`category: ${cat.name}`);
+            console.log(`category: ${cat.title}`);
             for (const sub of cat.subCategories) {
                 await CategoryModel.create({
-                    name: sub.name,
+                    title: sub.title,
                     slug: sub.slug,
                     image: sub.image,
+                    description: "",
+                    color: "#a569bd",
+                    icon: "fas fa-edit",
                     parent: parentDoc._id
                 });
-                console.log(`sub-category: ${sub.name}`);
+                console.log(`sub-category: ${sub.title}`);
             }
         }
     } catch (err) {
@@ -137,13 +149,16 @@ async function saveProductFromJson() {
         const data = JSON.parse(fs.readFileSync('./data/products.json', 'utf-8'));
 
         for (const item of data) {
-            let categoryDoc = await CategoryModel.findOne({ name: item.category });
+            let categoryDoc = await CategoryModel.findOne({ title: item.category });
 
             if (!categoryDoc) {
                 categoryDoc = new CategoryModel({
-                    name: item.category,
+                    title: item.category,
                     slug: slugify(item.category, { lower: true, strict: true }),
                     image: null,
+                    description: "",
+                    color: "#a569bd",
+                    icon: "fas fa-edit",
                     parent: null,
                 });
 
@@ -157,7 +172,7 @@ async function saveProductFromJson() {
             });
 
             await product.save();
-            console.log(`product: ${item.name}`);
+            console.log(`product: ${item.title}`);
         }
     } catch (err) {
         console.error("error:", err);

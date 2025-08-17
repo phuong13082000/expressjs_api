@@ -3,7 +3,7 @@ import slugify from "slugify";
 
 const categorySchema = new mongoose.Schema(
     {
-        name: {
+        title: {
             type: String,
             required: true,
         },
@@ -11,6 +11,9 @@ const categorySchema = new mongoose.Schema(
             type: String,
             unique: true
         },
+        description: String,
+        color: String,
+        icon: String,
         image: {
             type: String,
             default: null
@@ -25,8 +28,8 @@ const categorySchema = new mongoose.Schema(
 );
 
 categorySchema.pre("save", function (next) {
-  if (!this.slug && this.name) {
-    this.slug = slugify(this.name, { lower: true, strict: true });
+  if (!this.slug && this.title) {
+    this.slug = slugify(this.title, { lower: true, strict: true });
   }
   next();
 });

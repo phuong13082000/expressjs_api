@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import slugify from "slugify";
 
 const productSchema = new mongoose.Schema({
-    name: {
+    title: {
         type: String,
         required: true,
     },
@@ -54,16 +54,16 @@ const productSchema = new mongoose.Schema({
 })
 
 productSchema.index({
-    name: "text",
+    title: "text",
     description: "text"
 }, {
-    name: 10,
+    title: 10,
     description: 5
 })
 
 productSchema.pre("save", function (next) {
-    if (!this.slug && this.name) {
-        this.slug = slugify(this.name, { lower: true, strict: true });
+    if (!this.slug && this.title) {
+        this.slug = slugify(this.title, { lower: true, strict: true });
     }
     next();
 });
