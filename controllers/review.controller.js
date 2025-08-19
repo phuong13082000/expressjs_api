@@ -1,5 +1,5 @@
 export class ReviewController{
-    static async getByProduct(req, res) {
+    static async get(req, res) {
 
     }
 

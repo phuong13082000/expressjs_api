@@ -14,13 +14,13 @@ export class OrderController {
         try {
             const userId = req.userId
 
-            const orderList = await OrderModel.find({userId: userId})
+            const orderList = await OrderModel.find({ userId: userId })
                 .select('-userId -createdAt -updatedAt -__v')
                 .populate({
                     path: 'deliveryAddress',
                     select: '-createdAt -updatedAt -__v -userId',
                 })
-                .sort({createdAt: -1})
+                .sort({ createdAt: -1 })
 
             return res.json({
                 success: true,
@@ -39,7 +39,7 @@ export class OrderController {
     static async create(req, res) {
         try {
             const userId = req.userId
-            const {listItems, addressId, paymentMethod} = req.body
+            const { listItems, addressId, paymentMethod } = req.body
 
             if (!Array.isArray(listItems) || listItems.length === 0) {
                 return res.status(400).json({
@@ -82,12 +82,18 @@ export class OrderController {
                         status: "pending",
                     });
 
-                    await CartModel.deleteMany({userId: userId})
-                    await UserModel.updateOne({_id: userId}, {shopping_cart: []})
+                    await CartModel.deleteMany({ userId: userId })
+                    await UserModel.updateOne({ _id: userId }, { shoppingCart: [] })
+                    await UserModel.updateOne({ _id: userId }, { orderHistory: order._id })
+
+                    for (const item of productDetails) {
+                        await ProductModel.findByIdAndUpdate(item.productId, {
+                            $inc: { stock: -item.quantity }
+                        })
+                    }
 
                     return res.json({
                         success: true,
-                        data: order,
                         message: "Order successfully created with cod",
                     })
 
@@ -133,7 +139,7 @@ export class OrderController {
                             paymentMethod: "stripe"
                         },
                         line_items: stripeItems,
-                        success_url: `${process.env.FRONTEND_URL}/success`,
+                        success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
                         cancel_url: `${process.env.FRONTEND_URL}/cancel`
                     }
 
@@ -160,14 +166,13 @@ export class OrderController {
         const event = req.body;
 
         switch (event.type) {
+            // checkout completed
             case 'checkout.session.completed':
                 const session = event.data.object;
                 const lineItems = await Stripe.checkout.sessions.listLineItems(session.id)
                 const userId = session.metadata.userId
 
-                const { products, subTotal } = await getOrderProductItems({
-                    lineItems: lineItems,
-                });
+                const { products, subTotal } = await getOrderProductItems({ lineItems: lineItems });
 
                 const order = await OrderModel.create({
                     orderId: `ORD-${Date.now()}`,
@@ -178,20 +183,96 @@ export class OrderController {
                     totalAmt: subTotal,
                     paymentId: session.payment_intent,
                     paymentStatus: session.payment_status,
-                    paymentMethod: "stripe"
+                    paymentMethod: "stripe",
+                    status: 'paid'
                 });
 
                 if (order) {
-                    await UserModel.findByIdAndUpdate(userId, {shoppingCart: []})
-                    await CartModel.deleteMany({userId: userId})
+                    await UserModel.findByIdAndUpdate(userId, { shoppingCart: [] })
+                    await UserModel.updateOne({ _id: userId }, { orderHistory: order._id })
+                    await CartModel.deleteMany({ userId: userId })
+
+                    for (const item of products) {
+                        await ProductModel.findByIdAndUpdate(item.productId, {
+                            $inc: { stock: -item.quantity }
+                        })
+                    }
                 }
 
                 break;
+
+            // payment succeeded
+            case 'payment_intent.succeeded': {
+                const paymentIntent = event.data.object;
+                console.log(`PaymentIntent ${paymentIntent.id} succeeded`);
+                break;
+            }
+
+            // payment failed
+            case 'payment_intent.payment_failed': {
+                const paymentIntent = event.data.object;
+                console.log(`PaymentIntent ${paymentIntent.id} failed`);
+                await OrderModel.updateOne(
+                    { paymentId: paymentIntent.payment_intent },
+                    { $set: { paymentStatus: "failed" } }
+                );
+                break;
+            }
+
+            // charge succeeded
+            case 'charge.succeeded': {
+                const charge = event.data.object;
+                console.log(`Charge ${charge.id} succeeded`);
+                break;
+            }
+
+            // refund succeeded
+            case 'charge.refunded': {
+                const charge = event.data.object;
+                console.log(`Charge ${charge.id} refunded`);
+                await OrderModel.updateOne(
+                    { paymentId: charge.payment_intent },
+                    { $set: { paymentStatus: "refunded" } }
+                );
+                break;
+            }
+
+            // refund created
+            case 'refund.created': {
+                const refund = event.data.object;
+                console.log(`Refund ${refund.id} created`);
+                break;
+            }
+
+            // refund updated status
+            case 'refund.updated': {
+                const refund = event.data.object;
+                console.log(`Refund ${refund.id} updated - status: ${refund.status}`);
+                break;
+            }
+
+            // subscription event
+            case 'customer.subscription.created':
+            case 'customer.subscription.updated':
+            case 'customer.subscription.deleted': {
+                const subscription = event.data.object;
+                console.log(`Subscription event: ${event.type}`, subscription.id);
+                break;
+            }
+
+            // invoice event (subscription payment)
+            case 'invoice.payment_succeeded':
+            case 'invoice.payment_failed': {
+                const invoice = event.data.object;
+                console.log(`Invoice event: ${event.type}`, invoice.id);
+                break;
+            }
+
             default:
                 console.log(`Unhandled event type ${event.type}`);
         }
 
-        res.json({received: true});
+        res.json({ received: true });
     }
 }
 

@@ -1,11 +1,11 @@
 import dotenv from "dotenv";
 import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import {OAuth2Client} from "google-auth-library";
+import { OAuth2Client } from "google-auth-library";
 
 import UserModel from '../models/user.model.js'
 import GenerateToken from "../utils/generateToken.js";
-import {saveImage} from "../middleware/upload.middleware.js";
+import { saveImage } from "../middleware/upload.middleware.js";
 
 dotenv.config();
 
@@ -14,9 +14,9 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 export class UserController {
     static async register(req, res) {
         try {
-            const {name, email, password} = req.body
+            const { name, email, password } = req.body
 
-            const user = await UserModel.findOne({email})
+            const user = await UserModel.findOne({ email })
 
             if (user) {
                 return res.json({
@@ -52,9 +52,9 @@ export class UserController {
 
     static async verifyEmail(req, res) {
         try {
-            const {code} = req.body
+            const { code } = req.body
 
-            const user = await UserModel.findOne({_id: code})
+            const user = await UserModel.findOne({ _id: code })
 
             if (!user) {
                 return res.status(400).json({
@@ -63,7 +63,7 @@ export class UserController {
                 })
             }
 
-            await UserModel.updateOne({_id: code}, {verifyEmail: true})
+            await UserModel.updateOne({ _id: code }, { verifyEmail: true })
 
             return res.json({
                 success: true,
@@ -79,10 +79,10 @@ export class UserController {
     }
 
     static async login(req, res) {
-        const {email, password} = req.body
+        const { email, password } = req.body
 
         try {
-            const user = await UserModel.findOne({email})
+            const user = await UserModel.findOne({ email })
 
             if (!user) {
                 return res.status(400).json({
@@ -110,7 +110,7 @@ export class UserController {
             const accessToken = GenerateToken.access(user._id)
             const refreshToken = await GenerateToken.refresh(user._id)
 
-            await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
+            await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
 
             const cookiesOption = {
                 httpOnly: true,
@@ -152,7 +152,7 @@ export class UserController {
         try {
             const userId = req.userId
 
-            await UserModel.findByIdAndUpdate(userId, {refreshToken: ""})
+            await UserModel.findByIdAndUpdate(userId, { refreshToken: "" })
 
             const cookiesOption = {
                 httpOnly: true,
@@ -183,7 +183,7 @@ export class UserController {
 
             const upload = await saveImage(image)
 
-            await UserModel.findByIdAndUpdate(userId, {avatar: upload})
+            await UserModel.findByIdAndUpdate(userId, { avatar: upload })
 
             return res.json({
                 success: true,
@@ -204,7 +204,7 @@ export class UserController {
     static async updateDetails(req, res) {
         try {
             const userId = req.userId
-            const {name, email, mobile, password} = req.body
+            const { name, email, mobile, password } = req.body
 
             let hashPassword = ""
 
@@ -213,11 +213,11 @@ export class UserController {
                 hashPassword = await bcryptjs.hash(password, salt)
             }
 
-            await UserModel.updateOne({_id: userId}, {
-                ...(name && {name: name}),
-                ...(email && {email: email}),
-                ...(mobile && {mobile: mobile}),
-                ...(password && {password: hashPassword})
+            await UserModel.updateOne({ _id: userId }, {
+                ...(name && { name: name }),
+                ...(email && { email: email }),
+                ...(mobile && { mobile: mobile }),
+                ...(password && { password: hashPassword })
             })
 
             return res.json({
@@ -235,9 +235,9 @@ export class UserController {
 
     static async forgotPassword(req, res) {
         try {
-            const {email} = req.body
+            const { email } = req.body
 
-            const user = await UserModel.findOne({email})
+            const user = await UserModel.findOne({ email })
 
             if (!user) {
                 return res.status(400).json({
@@ -269,7 +269,7 @@ export class UserController {
 
     static async verifyForgotPasswordOtp(req, res) {
         try {
-            const {email, otp} = req.body
+            const { email, otp } = req.body
 
             if (!email || !otp) {
                 return res.status(400).json({
@@ -278,7 +278,7 @@ export class UserController {
                 })
             }
 
-            const user = await UserModel.findOne({email})
+            const user = await UserModel.findOne({ email })
 
             if (!user) {
                 return res.status(400).json({
@@ -323,7 +323,7 @@ export class UserController {
 
     static async resetPassword(req, res) {
         try {
-            const {email, newPassword, confirmPassword} = req.body
+            const { email, newPassword, confirmPassword } = req.body
 
             if (!email || !newPassword || !confirmPassword) {
                 return res.status(400).json({
@@ -338,7 +338,7 @@ export class UserController {
                 })
             }
 
-            const user = await UserModel.findOne({email})
+            const user = await UserModel.findOne({ email })
 
             if (!user) {
                 return res.status(400).json({
@@ -350,7 +350,7 @@ export class UserController {
             const salt = await bcryptjs.genSalt(10)
             const hashPassword = await bcryptjs.hash(newPassword, salt)
 
-            await UserModel.findOneAndUpdate(user._id, {password: hashPassword})
+            await UserModel.findOneAndUpdate(user._id, { password: hashPassword })
 
             return res.json({
                 success: true,
@@ -436,6 +436,14 @@ export class UserController {
                     }
                 })
                 .populate({
+                    path: 'orderHistory',
+                    select: '-userId -createdAt -updatedAt -__v',
+                    populate: {
+                        path: 'deliveryAddress',
+                        select: '-createdAt -updatedAt -userId -__v',
+                    }
+                })
+                .populate({
                     path: 'favoriteProduct',
                     select: '-createdAt -updatedAt -__v',
                     populate: {
@@ -467,7 +475,7 @@ export class UserController {
 
     static async googleLogin(req, res) {
         try {
-            const {idToken} = req.body;
+            const { idToken } = req.body;
 
             const ticket = await client.verifyIdToken({
                 idToken,
@@ -475,9 +483,9 @@ export class UserController {
             })
 
             const payload = ticket.getPayload();
-            const {email, name, picture} = payload;
+            const { email, name, picture } = payload;
 
-            let user = await UserModel.findOne({email});
+            let user = await UserModel.findOne({ email });
 
             if (user.status !== "Active") {
                 return res.status(400).json({
@@ -498,7 +506,7 @@ export class UserController {
             const accessToken = GenerateToken.access(user._id)
             const refreshToken = await GenerateToken.refresh(user._id)
 
-            await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
+            await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
 
             const cookiesOption = {
                 httpOnly: true,
@@ -540,7 +548,7 @@ export class UserController {
         try {
             const userId = req.userId
 
-            await UserModel.findByIdAndUpdate(userId, {status: "Suspended"})
+            await UserModel.findByIdAndUpdate(userId, { status: "Suspended" })
 
             return res.json({
                 success: true,

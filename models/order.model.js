@@ -18,16 +18,20 @@ const orderSchema = new mongoose.Schema({
     },
     products: [
         {
-            productId: {type: mongoose.Schema.ObjectId, ref: "product", required: true},
-            title: {type: String},
-            images: {type: Array, default: []},
-            quantity: {type: Number, default: 1},
-            price: {type: Number, required: true}
+            productId: {
+                type: mongoose.Schema.ObjectId,
+                ref: "product",
+                required: true,
+            },
+            title: { type: String },
+            images: { type: Array, default: [] },
+            quantity: { type: Number, default: 1 },
+            price: { type: Number, required: true }
         }
     ],
-    subTotalAmt: {type: Number, default: 0},
-    totalAmt: {type: Number, default: 0},
-    paymentId: {type: String, default: null},
+    subTotalAmt: { type: Number, default: 0 },
+    totalAmt: { type: Number, default: 0 },
+    paymentId: { type: String, default: null },
     paymentStatus: {
         type: String,
         enum: ["pending", "paid", "failed", "refunded"],
@@ -43,7 +47,7 @@ const orderSchema = new mongoose.Schema({
         enum: ["cod", "card", "paypal", "stripe"],
         default: "cod"
     },
-    invoiceReceipt: {type: String, default: null},
+    invoiceReceipt: { type: String, default: null },
 }, {
     timestamps: true
 });

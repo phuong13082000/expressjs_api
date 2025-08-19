@@ -9,6 +9,7 @@ export class OrderRoutes {
     }
 
     registerRoutes() {
+        //stripe listen --forward-to localhost:8000/api/v1/order/webhook-stripe
         this.router.post('/webhook-stripe', OrderController.webhookStripe);
 
         this.router.use(authMiddleware);
