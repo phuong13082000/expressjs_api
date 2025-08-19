@@ -1,10 +1,15 @@
 import CouponModel from "../models/coupon.model.js";
+import UserModel from "../models/user.model.js";
 
 export class CouponController {
     static async get(req, res) {
         try {
             const data = await CouponModel.find()
-                .select("-createdAt -updatedAt -__v");
+                .select('-createdAt -updatedAt -__v')
+                .populate({
+                    path: 'usedBy',
+                    select: 'name email',
+                })
 
             return res.json({
                 success: true,
@@ -21,9 +26,9 @@ export class CouponController {
     }
 
     static async create(req, res) {
-        const {code, discountType, discountValue, minOrderValue, usageLimit, expiresAt} = req.body;
-
         try {
+            const { code, discountType, discountValue, minOrderValue, usageLimit, expiresAt } = req.body;
+
             const createCoupon = new CouponModel({
                 code,
                 discountType,
@@ -49,11 +54,11 @@ export class CouponController {
     }
 
     static async update(req, res) {
-        const {id} = req.params;
-        const {code, discountType, discountValue, minOrderValue, usageLimit, expiresAt} = req.body;
-
         try {
-            await CouponModel.updateOne({_id: id}, {
+            const { id } = req.params;
+            const { code, discountType, discountValue, minOrderValue, usageLimit, expiresAt } = req.body;
+
+            await CouponModel.updateOne({ _id: id }, {
                 code,
                 discountType,
                 discountValue,
@@ -76,10 +81,10 @@ export class CouponController {
     }
 
     static async delete(req, res) {
-        const {id} = req.params;
+        const { id } = req.params;
 
         try {
-            await CouponModel.deleteOne({_id: id});
+            await CouponModel.deleteOne({ _id: id });
 
             return res.json({
                 success: true,
@@ -96,9 +101,10 @@ export class CouponController {
 
     static async use(req, res) {
         try {
-            const {code, orderValue} = req.body;
+            const userId = req.userId
+            const { code, orderValue } = req.body;
 
-            const coupon = await CouponModel.findOne({code: code.toUpperCase()});
+            const coupon = await CouponModel.findOne({ code: code.toUpperCase() });
 
             if (!coupon) {
                 return res.status(404).json({
@@ -128,6 +134,13 @@ export class CouponController {
                 });
             }
 
+            if (coupon.usedBy.includes(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Coupon used"
+                });
+            }
+
             let discount = 0;
 
             if (coupon.discountType === "percent") {
@@ -140,12 +153,23 @@ export class CouponController {
                 discount = orderValue;
             }
 
+            coupon.usageLimit -= 1;
+            coupon.usedCount += 1;
+            coupon.usedBy.push(userId);
+
+            await coupon.save()
+
+            await UserModel.findByIdAndUpdate(
+                userId,
+                { $addToSet: { usedCoupons: coupon._id } },
+                { new: true }
+            );
+
             return res.json({
                 success: true,
                 data: {
                     discount: discount,
                     finalPrice: orderValue - discount,
-                    coupon: coupon.code,
                 },
                 message: '',
             })

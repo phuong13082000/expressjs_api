@@ -10,11 +10,11 @@ export class CouponRoutes {
     }
 
     registerRoutes() {
-        this.router.post('/use', CouponController.use)
-
         this.router.use(authMiddleware);
-        this.router.use(adminMiddleware);
+        this.router.post('/use', CouponController.use)
         this.router.get('/get', CouponController.get)
+
+        this.router.use(adminMiddleware);
         this.router.post('/create', CouponController.create)
         this.router.put('/update/:id', CouponController.update)
         this.router.delete('/delete/:id', CouponController.delete)

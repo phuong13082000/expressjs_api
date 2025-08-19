@@ -82,11 +82,17 @@ const userSchema = new mongoose.Schema({
             type: mongoose.Schema.ObjectId,
             ref: 'product'
         }
+    ],
+    usedCoupons: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'coupon'
+        }
     ]
 }, {
     timestamps: true
 })
 
-const UserModel = mongoose.model("User", userSchema)
+const UserModel = mongoose.model("user", userSchema)
 
 export default UserModel
