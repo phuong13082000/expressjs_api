@@ -427,7 +427,7 @@ export class UserController {
                     path: 'shoppingCart',
                     select: '-createdAt -updatedAt -userId -__v',
                     populate: {
-                        path: 'products',
+                        path: 'product',
                         select: '-createdAt -updatedAt -__v',
                         populate: {
                             path: 'category',

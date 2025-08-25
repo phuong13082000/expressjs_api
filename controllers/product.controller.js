@@ -37,10 +37,12 @@ export class ProductController {
             return res.json({
                 success: true,
                 data,
-                page,
-                limit,
-                totalCount,
-                totalPages: Math.ceil(totalCount / limit),
+                pagination: {
+                    page,
+                    limit,
+                    totalCount,
+                    totalPages: Math.ceil(totalCount / limit),
+                },
                 message: ''
             });
         } catch (e) {
@@ -62,7 +64,15 @@ export class ProductController {
                     path: "category",
                     select: "-createdAt -updatedAt -parent -__v",
                 })
-
+                .populate({
+                    path: "reviews",
+                    select: "-createdAt -updatedAt -product -__v",
+                    populate: ({
+                        path: 'user',
+                        select: 'name email avatar'
+                    })
+                })
+                
             return res.json({
                 success: true,
                 data: product,

@@ -5,17 +5,18 @@ import cookieParser from 'cookie-parser';
 import morgan from "morgan";
 import helmet from "helmet";
 import path from "path";
-import {fileURLToPath} from "url";
+import { fileURLToPath } from "url";
 import Database from "./configs/database.js";
 
-import {CategoryRoutes} from "./routes/category.route.js";
-import {AddressRoutes} from "./routes/address.route.js";
-import {UploadRoutes} from "./routes/upload.route.js";
-import {ProductRoutes} from "./routes/product.route.js";
-import {CartRoutes} from "./routes/cart.route.js";
-import {OrderRoutes} from "./routes/order.route.js";
-import {UserRoutes} from "./routes/user.route.js";
-import {CouponRoutes} from "./routes/coupon.route.js";
+import { CategoryRoutes } from "./routes/category.route.js";
+import { AddressRoutes } from "./routes/address.route.js";
+import { UploadRoutes } from "./routes/upload.route.js";
+import { ProductRoutes } from "./routes/product.route.js";
+import { CartRoutes } from "./routes/cart.route.js";
+import { OrderRoutes } from "./routes/order.route.js";
+import { UserRoutes } from "./routes/user.route.js";
+import { CouponRoutes } from "./routes/coupon.route.js";
+import { ReviewRoutes } from "./routes/review.route.js";
 
 dotenv.config();
 
@@ -28,7 +29,7 @@ app.use(cors({
     origin: process.env.FRONTEND_URL,
 }))
 app.use(express.json()) // limit: '10kb'
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(morgan('dev')) // combined > common > dev > short
 app.use(helmet({
@@ -46,6 +47,7 @@ const orderRouter = new OrderRoutes();
 const productRouter = new ProductRoutes();
 const categoryRouter = new CategoryRoutes();
 const couponRouter = new CouponRoutes();
+const reviewRouter = new ReviewRoutes();
 
 app.use('/api/v1/user', userRouter.getRouter())
 app.use('/api/v1/address', addressRouter.getRouter())
@@ -55,6 +57,7 @@ app.use('/api/v1/product', productRouter.getRouter())
 app.use('/api/v1/cart', cartRouter.getRouter())
 app.use('/api/v1/order', orderRouter.getRouter())
 app.use('/api/v1/coupon', couponRouter.getRouter())
+app.use('/api/v1/review', reviewRouter.getRouter())
 
 Database.connect().then(() => {
     app.listen(port, () => console.log("Server running on http://localhost:" + port))

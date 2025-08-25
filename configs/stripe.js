@@ -3,6 +3,11 @@ import stripe from "stripe";
 
 dotenv.config()
 
-const Stripe = stripe(process.env.STRIPE_SECRET_KEY)
+class Stripe {
+    constructor() {
+        stripe(process.env.STRIPE_SECRET_KEY)
+    }
+}
 
-export default Stripe
+export default new Stripe()
+

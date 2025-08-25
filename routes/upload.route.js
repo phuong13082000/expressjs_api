@@ -10,7 +10,8 @@ export class UploadRoutes {
     }
 
     registerRoutes() {
-        this.router.post('/upload', authMiddleware, uploadMiddlewareImage, UploadController.image);
+        this.router.use(authMiddleware)
+        this.router.post('/upload', uploadMiddlewareImage, UploadController.image);
     }
 
     getRouter() {

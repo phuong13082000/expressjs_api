@@ -32,7 +32,7 @@ export class CategoryController {
                             {
                                 $project: {
                                     _id: 1,
-                                    name: 1,
+                                    title: 1,
                                     slug: 1,
                                     image: 1
                                 }
@@ -44,7 +44,7 @@ export class CategoryController {
                 {
                     $project: {
                         _id: 1,
-                        name: 1,
+                        title: 1,
                         slug: 1,
                         image: 1,
                         children: 1
@@ -68,10 +68,10 @@ export class CategoryController {
 
     static async create(req, res) {
         try {
-            const {name, image, parent} = req.body
+            const {title, image, parent} = req.body
 
             const addCategory = new CategoryModel({
-                name,
+                title,
                 image,
                 parent,
             })
@@ -93,19 +93,18 @@ export class CategoryController {
 
     static async update(req, res) {
         try {
-            const {_id, name, image, parent} = req.body
+            const {_id, title, image, parent} = req.body
 
             const update = await CategoryModel.updateOne({
                 _id: _id
             }, {
-                name,
+                title,
                 image,
                 parent,
             })
 
             return res.json({
                 success: true,
-                data: update,
                 message: ''
             })
         } catch (e) {

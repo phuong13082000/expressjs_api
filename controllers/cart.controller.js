@@ -9,7 +9,7 @@ export class CartController {
             const cartItem = await CartModel.find({userId: userId})
                 .select('-userId -__v -createdAt -updatedAt')
                 .populate({
-                    path: 'products',
+                    path: 'product',
                     select: '-createdAt -updatedAt -__v',
                     populate: {
                         path: 'category',
@@ -58,7 +58,7 @@ export class CartController {
             const cartItem = new CartModel({
                 quantity: 1,
                 userId: userId,
-                products: productId
+                product: productId
             })
 
             await cartItem.save()

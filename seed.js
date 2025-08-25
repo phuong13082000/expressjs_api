@@ -23,6 +23,10 @@ const buildImagePath = (folder, filename) => {
     return `${process.env.SERVER_URL}/${folder}/${filename}`;
 };
 
+function getRandom(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 const coupons = [
     {
         code: "SALE10",
@@ -122,9 +126,9 @@ function scanAllProducts(root) {
                     slug: slugify(prod.name, { lower: true, strict: true }),
                     images: images,
                     unit: 10,
-                    stock: 10,
-                    price: 20,
-                    discount: 0,
+                    stock: getRandom(10, 100),
+                    price: getRandom(20, 200),
+                    discount: getRandom(0, 100),
                     description: slugify(prod.name, { lower: true, strict: true }),
                     moreDetails: {},
                     publish: true,
