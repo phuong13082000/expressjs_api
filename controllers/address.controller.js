@@ -1,7 +1,8 @@
 import AddressModel from "../models/address.model.js";
 import UserModel from "../models/user.model.js";
+import {BaseController} from "./base.controller.js";
 
-export class AddressController {
+class AddressController extends BaseController {
     static async get(req, res) {
         try {
             const userId = req.userId
@@ -9,17 +10,10 @@ export class AddressController {
                 .select("-userId -createdAt -updatedAt -__v")
                 .sort({createdAt: -1})
 
-            return res.json({
-                success: true,
-                data: data,
-                message: '',
-            })
+            return this.success(res, data);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -46,16 +40,10 @@ export class AddressController {
                 }
             })
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -73,16 +61,10 @@ export class AddressController {
                 pinCode
             })
 
-            return res.json({
-                success: true,
-                message: "",
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -93,16 +75,12 @@ export class AddressController {
 
             await AddressModel.updateOne({_id: _id, userId}, {status: false})
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 }
+
+export default new AddressController();

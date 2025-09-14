@@ -1,32 +1,28 @@
 import dotenv from "dotenv";
-import bcryptjs from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import { OAuth2Client } from "google-auth-library";
+import {OAuth2Client} from "google-auth-library";
 
 import UserModel from '../models/user.model.js'
-import GenerateToken from "../utils/generateToken.js";
-import { saveImage } from "../middleware/upload.middleware.js";
+import {saveImage} from "../middleware/upload.middleware.js";
+import {BaseController} from "./base.controller.js";
+import Password from "../utils/password.js";
+import Token from "../utils/token.js";
 
 dotenv.config();
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
-export class UserController {
+class UserController extends BaseController {
     static async register(req, res) {
         try {
-            const { name, email, password } = req.body
+            const {name, email, password} = req.body
 
-            const user = await UserModel.findOne({ email })
+            const user = await UserModel.findOne({email})
 
             if (user) {
-                return res.json({
-                    success: false,
-                    message: "User already exists with the same email! Please try again",
-                })
+                return this.error(res, "user already exists with the same email! Please try again");
             }
 
-            const salt = await bcryptjs.genSalt(10)
-            const hashPassword = await bcryptjs.hash(password, salt)
+            const hashPassword = await Password.hash(password);
 
             const newUser = new UserModel({
                 name,
@@ -36,81 +32,56 @@ export class UserController {
 
             const save = await newUser.save()
 
-            return res.json({
-                success: true,
-                data: save,
-                message: 'Register successfully',
-            })
+            return this.success(res, save, "register successfully")
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
     static async verifyEmail(req, res) {
         try {
-            const { code } = req.body
+            const {code} = req.body
 
-            const user = await UserModel.findOne({ _id: code })
+            const user = await UserModel.findOne({_id: code})
 
             if (!user) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid code",
-                })
+                return this.error(res, "invalid code", 400);
             }
 
-            await UserModel.updateOne({ _id: code }, { verifyEmail: true })
+            await UserModel.updateOne({_id: code}, {verifyEmail: true})
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
     static async login(req, res) {
-        const { email, password } = req.body
+        const {email, password} = req.body
 
         try {
-            const user = await UserModel.findOne({ email })
+            const user = await UserModel.findOne({email})
 
             if (!user) {
-                return res.status(400).json({
-                    success: false,
-                    message: "User doesn't exists! Please register first",
-                })
+                return this.error(res, "user doesnt exists! please register first", 400);
             }
 
-            const checkPasswordMatch = await bcryptjs.compare(password, user.password);
+            const checkPasswordMatch = await Password.check(password, user.password);
 
             if (!checkPasswordMatch) {
-                return res.json({
-                    success: false,
-                    message: "Incorrect password! Please try again",
-                });
+                return this.error(res, "incorrect password! please try again");
             }
 
             if (user.status !== "Active") {
-                return res.status(400).json({
-                    success: false,
-                    message: "Your account is not active. Contact the administrator.",
-                })
+                return this.error(res, "Your account is not active. Contact the administrator", 400);
             }
 
-            const accessToken = GenerateToken.access(user._id)
-            const refreshToken = await GenerateToken.refresh(user._id)
+            const accessToken = Token.genAccess(user._id)
+            const refreshToken = await Token.genRefresh(user._id)
 
-            await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
+            await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
 
             const cookiesOption = {
                 httpOnly: true,
@@ -121,30 +92,23 @@ export class UserController {
             res.cookie('accessToken', accessToken, cookiesOption)
             res.cookie('refreshToken', refreshToken, cookiesOption)
 
-            return res.json({
-                success: true,
-                data: {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    avatar: user.avatar,
-                    mobile: user.mobile,
-                    refreshToken: user.refreshToken,
-                    verifyEmail: user.verifyEmail,
-                    lastLoginDate: user.lastLoginDate,
-                    status: user.status,
-                    role: user.role,
-                    provider: user.provider,
-                    token: accessToken
-                },
-                message: "",
+            return this.success(res, {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                mobile: user.mobile,
+                refreshToken: user.refreshToken,
+                verifyEmail: user.verifyEmail,
+                lastLoginDate: user.lastLoginDate,
+                status: user.status,
+                role: user.role,
+                provider: user.provider,
+                token: accessToken
             })
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -152,7 +116,7 @@ export class UserController {
         try {
             const userId = req.userId
 
-            await UserModel.findByIdAndUpdate(userId, { refreshToken: "" })
+            await UserModel.findByIdAndUpdate(userId, {refreshToken: ""})
 
             const cookiesOption = {
                 httpOnly: true,
@@ -163,16 +127,10 @@ export class UserController {
             res.clearCookie("accessToken", cookiesOption)
             res.clearCookie("refreshToken", cookiesOption)
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -183,67 +141,48 @@ export class UserController {
 
             const upload = await saveImage(image)
 
-            await UserModel.findByIdAndUpdate(userId, { avatar: upload })
+            await UserModel.findByIdAndUpdate(userId, {avatar: upload})
 
-            return res.json({
-                success: true,
-                data: {
-                    image: upload
-                },
-                message: '',
-            })
+            return this.success(res, {image: upload})
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
     static async updateDetails(req, res) {
         try {
             const userId = req.userId
-            const { name, email, mobile, password } = req.body
+            const {name, email, mobile, password} = req.body
 
             let hashPassword = ""
 
             if (password) {
-                const salt = await bcryptjs.genSalt(10)
-                hashPassword = await bcryptjs.hash(password, salt)
+                hashPassword = await Password.hash(password)
             }
 
-            await UserModel.updateOne({ _id: userId }, {
-                ...(name && { name: name }),
-                ...(email && { email: email }),
-                ...(mobile && { mobile: mobile }),
-                ...(password && { password: hashPassword })
+            await UserModel.updateOne({_id: userId}, {
+                ...(name && {name: name}),
+                ...(email && {email: email}),
+                ...(mobile && {mobile: mobile}),
+                ...(password && {password: hashPassword})
             })
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
     static async forgotPassword(req, res) {
         try {
-            const { email } = req.body
+            const {email} = req.body
 
-            const user = await UserModel.findOne({ email })
+            const user = await UserModel.findOne({email})
 
             if (!user) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Email not available",
-                })
+                return this.error(res, "email not available", 400);
             }
 
             const otp = Math.floor(Math.random() * 900000) + 100000 // 100.000 to 999.999
@@ -254,53 +193,35 @@ export class UserController {
                 forgotPasswordExpiry: new Date(expireTime).toISOString()
             })
 
-            return res.json({
-                success: true,
-                message: `otp: ${otp}`,
-            })
+            return this.success(res, {}, `otp: ${otp}`)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
     static async verifyForgotPasswordOtp(req, res) {
         try {
-            const { email, otp } = req.body
+            const {email, otp} = req.body
 
             if (!email || !otp) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Provide required field email, otp.",
-                })
+                return this.error(res, "provide required field email, otp", 400);
             }
 
-            const user = await UserModel.findOne({ email })
+            const user = await UserModel.findOne({email})
 
             if (!user) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Email not available",
-                })
+                return this.error(res, "email not available", 400);
             }
 
             const currentTime = new Date().toISOString()
 
             if (user.forgotPasswordExpiry < currentTime) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Otp is expired",
-                })
+                return this.error(res, "otp is expired", 400);
             }
 
             if (otp !== user.forgotPasswordOtp) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid otp",
-                })
+                return this.error(res, "invalid otp", 400);
             }
 
             await UserModel.findByIdAndUpdate(user?._id, {
@@ -308,60 +229,39 @@ export class UserController {
                 forgotPasswordExpiry: null
             })
 
-            return res.json({
-                success: true,
-                message: "Verify otp successfully",
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
     static async resetPassword(req, res) {
         try {
-            const { email, newPassword, confirmPassword } = req.body
+            const {email, newPassword, confirmPassword} = req.body
 
             if (!email || !newPassword || !confirmPassword) {
-                return res.status(400).json({
-                    message: "Provide required fields"
-                })
+                return this.error(res, "provide required fields", 400);
             }
 
             if (newPassword !== confirmPassword) {
-                return res.status(400).json({
-                    success: false,
-                    message: "new password and confirm password must be same.",
-                })
+                return this.error(res, "new password and confirm password must be same", 400);
             }
 
-            const user = await UserModel.findOne({ email })
+            const user = await UserModel.findOne({email})
 
             if (!user) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Email is not available",
-                })
+                return this.error(res, "email isn't available", 400);
             }
 
-            const salt = await bcryptjs.genSalt(10)
-            const hashPassword = await bcryptjs.hash(newPassword, salt)
+            const hashPassword = await Password.hash(newPassword)
 
-            await UserModel.findOneAndUpdate(user._id, { password: hashPassword })
+            await UserModel.findOneAndUpdate(user._id, {password: hashPassword})
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -370,24 +270,18 @@ export class UserController {
             const refreshToken = req.cookies.refreshToken || req?.headers?.authorization?.split(" ")[1]
 
             if (!refreshToken) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Invalid token",
-                })
+                return this.error(res, "invalid token", 401);
             }
 
-            const verifyToken = jwt.verify(refreshToken, process.env.SECRET_KEY_REFRESH_TOKEN)
+            const verifyToken = Token.verifyRefresh(refreshToken)
 
             if (!verifyToken) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Token is expired",
-                })
+                return this.error(res, "token is expired", 401);
             }
 
             const userId = verifyToken?._id
 
-            const newAccessToken = GenerateToken.access(userId)
+            const newAccessToken = Token.genAccess(userId)
 
             const cookiesOption = {
                 httpOnly: true,
@@ -397,19 +291,10 @@ export class UserController {
 
             res.cookie('accessToken', newAccessToken, cookiesOption)
 
-            return res.json({
-                success: true,
-                data: {
-                    token: newAccessToken
-                },
-                message: '',
-            })
+            return this.success(res, {token: newAccessToken})
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -453,29 +338,19 @@ export class UserController {
                 })
 
             if (!user) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Token is expired",
-                })
+                return this.error(res, "token is expired", 401)
             }
 
-            return res.json({
-                success: true,
-                data: user,
-                message: '',
-            })
+            return this.success(res, user)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
     static async googleLogin(req, res) {
         try {
-            const { idToken } = req.body;
+            const {idToken} = req.body;
 
             const ticket = await client.verifyIdToken({
                 idToken,
@@ -483,15 +358,12 @@ export class UserController {
             })
 
             const payload = ticket.getPayload();
-            const { email, name, picture } = payload;
+            const {email, name, picture} = payload;
 
-            let user = await UserModel.findOne({ email });
+            let user = await UserModel.findOne({email});
 
             if (user.status !== "Active") {
-                return res.status(400).json({
-                    success: false,
-                    message: "Your account is not active. Contact the administrator.",
-                })
+                return this.error(res, "your account isn't active. contact the admin", 401);
             }
 
             if (!user) {
@@ -503,10 +375,10 @@ export class UserController {
                 });
             }
 
-            const accessToken = GenerateToken.access(user._id)
-            const refreshToken = await GenerateToken.refresh(user._id)
+            const accessToken = Token.genAccess(user._id)
+            const refreshToken = await Token.genRefresh(user._id)
 
-            await UserModel.findByIdAndUpdate(user?._id, { lastLoginDate: new Date() })
+            await UserModel.findByIdAndUpdate(user?._id, {lastLoginDate: new Date()})
 
             const cookiesOption = {
                 httpOnly: true,
@@ -517,30 +389,23 @@ export class UserController {
             res.cookie('accessToken', accessToken, cookiesOption)
             res.cookie('refreshToken', refreshToken, cookiesOption)
 
-            return res.json({
-                success: true,
-                data: {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    avatar: user.avatar,
-                    mobile: user.mobile,
-                    refreshToken: refreshToken,
-                    verifyEmail: user.verifyEmail,
-                    lastLoginDate: user.lastLoginDate,
-                    status: user.status,
-                    role: user.role,
-                    provider: user.provider,
-                    token: accessToken
-                },
-                message: '',
-            })
+            return this.success(res, {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                mobile: user.mobile,
+                refreshToken: refreshToken,
+                verifyEmail: user.verifyEmail,
+                lastLoginDate: user.lastLoginDate,
+                status: user.status,
+                role: user.role,
+                provider: user.provider,
+                token: accessToken
+            });
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -548,18 +413,14 @@ export class UserController {
         try {
             const userId = req.userId
 
-            await UserModel.findByIdAndUpdate(userId, { status: "Suspended" })
+            await UserModel.findByIdAndUpdate(userId, {status: "Suspended"})
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 }
+
+export default new UserController();

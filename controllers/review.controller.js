@@ -1,8 +1,9 @@
 import ReviewModel from '../models/review.model.js'
 import OrderModel from '../models/order.model.js'
 import ProductModel from '../models/product.model.js'
+import {BaseController} from "./base.controller.js";
 
-export class ReviewController {
+class ReviewController extends BaseController {
     static async get(req, res) {
         try {
             const userId = req.userId
@@ -21,17 +22,10 @@ export class ReviewController {
                     }
                 })
 
-            return res.json({
-                success: true,
-                data: data,
-                message: '',
-            })
+            return this.success(res, data)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -63,21 +57,13 @@ export class ReviewController {
             await review.save();
 
             await ProductModel.updateOne({ _id: productId }, {
-                $push: {
-                    reviews: review._id
-                }
+                $push: {reviews: review._id}
             })
 
-            return res.json({
-                success: true,
-                message: 'create review successfully',
-            });
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -85,16 +71,10 @@ export class ReviewController {
         try {
             const userId = req.userId
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -102,16 +82,12 @@ export class ReviewController {
         try {
             const userId = req.userId
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 }
+
+export default new ReviewController();

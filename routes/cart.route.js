@@ -1,19 +1,19 @@
 import {Router} from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
-import {CartController} from "../controllers/cart.controller.js";
 
 export class CartRoutes {
-    constructor() {
+    constructor(controller) {
+        this.controller = controller;
         this.router = Router()
         this.registerRoutes()
     }
 
     registerRoutes() {
         this.router.use(authMiddleware);
-        this.router.get("/get", CartController.get)
-        this.router.post('/add', CartController.create);
-        this.router.put('/update', CartController.update);
-        this.router.delete('/delete', CartController.delete);
+        this.router.get("/get", this.controller.get.bind(this.controller));
+        this.router.post('/add', this.controller.create.bind(this.controller));
+        this.router.put('/update', this.controller.update.bind(this.controller));
+        this.router.delete('/delete', this.controller.delete.bind(this.controller));
     }
 
     getRouter() {

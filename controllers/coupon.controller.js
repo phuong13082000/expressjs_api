@@ -1,7 +1,8 @@
 import CouponModel from "../models/coupon.model.js";
 import UserModel from "../models/user.model.js";
+import {BaseController} from "./base.controller.js";
 
-export class CouponController {
+class CouponController extends BaseController {
     static async get(req, res) {
         try {
             const data = await CouponModel.find()
@@ -11,23 +12,16 @@ export class CouponController {
                     select: 'name email',
                 })
 
-            return res.json({
-                success: true,
-                data: data,
-                message: '',
-            })
+            return this.success(res, data);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
     static async create(req, res) {
         try {
-            const { code, discountType, discountValue, minOrderValue, usageLimit, expiresAt } = req.body;
+            const {code, discountType, discountValue, minOrderValue, usageLimit, expiresAt} = req.body;
 
             const createCoupon = new CouponModel({
                 code,
@@ -40,25 +34,19 @@ export class CouponController {
 
             await createCoupon.save();
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
     static async update(req, res) {
         try {
-            const { id } = req.params;
-            const { code, discountType, discountValue, minOrderValue, usageLimit, expiresAt } = req.body;
+            const {id} = req.params;
+            const {code, discountType, discountValue, minOrderValue, usageLimit, expiresAt} = req.body;
 
-            await CouponModel.updateOne({ _id: id }, {
+            await CouponModel.updateOne({_id: id}, {
                 code,
                 discountType,
                 discountValue,
@@ -67,81 +55,54 @@ export class CouponController {
                 expiresAt,
             })
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
     static async delete(req, res) {
-        const { id } = req.params;
+        const {id} = req.params;
 
         try {
-            await CouponModel.deleteOne({ _id: id });
+            await CouponModel.deleteOne({_id: id});
 
-            return res.json({
-                success: true,
-                message: '',
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
     static async use(req, res) {
         try {
             const userId = req.userId
-            const { code, orderValue } = req.body;
+            const {code, orderValue} = req.body;
 
-            const coupon = await CouponModel.findOne({ code: code.toUpperCase() });
+            const coupon = await CouponModel.findOne({code: code.toUpperCase()});
 
             if (!coupon) {
-                return res.status(404).json({
-                    status: false,
-                    message: "Coupon not found"
-                });
+                return this.error(res, 'coupon not found')
             }
 
             if (coupon.expiresAt < new Date()) {
-                return res.status(400).json({
-                    status: false,
-                    message: "Coupon expired"
-                });
+                return this.error(res, 'coupon expired')
             }
 
             if (coupon.usedCount >= coupon.usageLimit) {
-                return res.status(400).json({
-                    status: false,
-                    message: "Coupon has run out of uses"
-                });
+                return this.error(res, 'coupon has run out of uses')
             }
 
             if (orderValue < coupon.minOrderValue) {
-                return res.status(400).json({
-                    status: false,
-                    message: "The order has not reached the minimum value"
-                });
+                return this.error(res, 'the order has not reached the minimum value')
             }
 
             if (coupon.usedBy.includes(userId)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Coupon used"
-                });
+                return this.error(res, 'coupon used')
             }
 
-            let discount = 0;
+            let discount;
 
             if (coupon.discountType === "percent") {
                 discount = (orderValue * coupon.discountValue) / 100;
@@ -161,24 +122,19 @@ export class CouponController {
 
             await UserModel.findByIdAndUpdate(
                 userId,
-                { $addToSet: { usedCoupons: coupon._id } },
-                { new: true }
+                {$addToSet: {usedCoupons: coupon._id}},
+                {new: true}
             );
 
-            return res.json({
-                success: true,
-                data: {
-                    discount: discount,
-                    finalPrice: orderValue - discount,
-                },
-                message: '',
-            })
+            return this.success(res, {
+                discount: discount,
+                finalPrice: orderValue - discount,
+            });
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 }
+
+export default new CouponController();

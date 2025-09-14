@@ -3,49 +3,40 @@ import UserModel from "../models/user.model.js";
 import CartModel from "../models/cart.model.js";
 import Stripe from "../configs/stripe.js";
 import ProductModel from "../models/product.model.js";
+import {BaseController} from "./base.controller.js";
 
 const priceWithDiscount = (price, dis = 1) => {
     const discountAmount = Math.ceil((Number(price) * Number(dis)) / 100)
     return Number(price) - Number(discountAmount)
 }
 
-export class OrderController {
+class OrderController extends BaseController {
     static async get(req, res) {
         try {
             const userId = req.userId
 
-            const orderList = await OrderModel.find({ userId: userId })
+            const orderList = await OrderModel.find({userId: userId})
                 .select('-userId -createdAt -updatedAt -__v')
                 .populate({
                     path: 'deliveryAddress',
                     select: '-createdAt -updatedAt -__v -userId',
                 })
-                .sort({ createdAt: -1 })
+                .sort({createdAt: -1})
 
-            return res.json({
-                success: true,
-                data: orderList,
-                message: '',
-            })
+            return this.success(res, orderList)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
     static async create(req, res) {
         try {
             const userId = req.userId
-            const { listItems, addressId, paymentMethod } = req.body
+            const {listItems, addressId, paymentMethod} = req.body
 
             if (!Array.isArray(listItems) || listItems.length === 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: "No items to purchase"
-                });
+                return this.error(res, 'no item to purchase')
             }
 
             switch (paymentMethod) {
@@ -82,20 +73,17 @@ export class OrderController {
                         status: "pending",
                     });
 
-                    await CartModel.deleteMany({ userId: userId })
-                    await UserModel.updateOne({ _id: userId }, { shoppingCart: [] })
-                    await UserModel.updateOne({ _id: userId }, { orderHistory: order._id })
+                    await CartModel.deleteMany({userId: userId})
+                    await UserModel.updateOne({_id: userId}, {shoppingCart: []})
+                    await UserModel.updateOne({_id: userId}, {orderHistory: order._id})
 
                     for (const item of productDetails) {
                         await ProductModel.findByIdAndUpdate(item.productId, {
-                            $inc: { stock: -item.quantity }
+                            $inc: {stock: -item.quantity}
                         })
                     }
 
-                    return res.json({
-                        success: true,
-                        message: "Order successfully created with cod",
-                    })
+                    return this.success(res, {}, 'order successfully created with cod')
 
                 case 'stripe':
                     let subTotalStripe = 0;
@@ -114,7 +102,7 @@ export class OrderController {
                                 currency: 'USD',
                                 product_data: {
                                     name: product.title,
-                                    metadata: { productId: product._id.toString() }
+                                    metadata: {productId: product._id.toString()}
                                 },
                                 unit_amount: priceWithDiscount(product.price, product.discount) * 100
                             },
@@ -145,20 +133,14 @@ export class OrderController {
 
                     const session = await Stripe.checkout.sessions.create(params)
 
-                    return res.status(200).json(session)
+                    return this.success(res, session)
 
                 default:
-                    return res.status(400).json({
-                        success: false,
-                        message: "Invalid payment method"
-                    });
+                    return this.error(res, 'invalid payment method', 400)
             }
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
@@ -172,7 +154,7 @@ export class OrderController {
                 const lineItems = await Stripe.checkout.sessions.listLineItems(session.id)
                 const userId = session.metadata.userId
 
-                const { products, subTotal } = await getOrderProductItems({ lineItems: lineItems });
+                const {products, subTotal} = await getOrderProductItems({lineItems: lineItems});
 
                 const order = await OrderModel.create({
                     orderId: `ORD-${Date.now()}`,
@@ -188,13 +170,13 @@ export class OrderController {
                 });
 
                 if (order) {
-                    await UserModel.findByIdAndUpdate(userId, { shoppingCart: [] })
-                    await UserModel.updateOne({ _id: userId }, { orderHistory: order._id })
-                    await CartModel.deleteMany({ userId: userId })
+                    await UserModel.findByIdAndUpdate(userId, {shoppingCart: []})
+                    await UserModel.updateOne({_id: userId}, {orderHistory: order._id})
+                    await CartModel.deleteMany({userId: userId})
 
                     for (const item of products) {
                         await ProductModel.findByIdAndUpdate(item.productId, {
-                            $inc: { stock: -item.quantity }
+                            $inc: {stock: -item.quantity}
                         })
                     }
                 }
@@ -213,8 +195,8 @@ export class OrderController {
                 const paymentIntent = event.data.object;
                 console.log(`PaymentIntent ${paymentIntent.id} failed`);
                 await OrderModel.updateOne(
-                    { paymentId: paymentIntent.payment_intent },
-                    { $set: { paymentStatus: "failed" } }
+                    {paymentId: paymentIntent.payment_intent},
+                    {$set: {paymentStatus: "failed"}}
                 );
                 break;
             }
@@ -231,8 +213,8 @@ export class OrderController {
                 const charge = event.data.object;
                 console.log(`Charge ${charge.id} refunded`);
                 await OrderModel.updateOne(
-                    { paymentId: charge.payment_intent },
-                    { $set: { paymentStatus: "refunded" } }
+                    {paymentId: charge.payment_intent},
+                    {$set: {paymentStatus: "refunded"}}
                 );
                 break;
             }
@@ -272,11 +254,11 @@ export class OrderController {
                 console.log(`Unhandled event type ${event.type}`);
         }
 
-        res.json({ received: true });
+        res.json({received: true});
     }
 }
 
-const getOrderProductItems = async ({ lineItems }) => {
+const getOrderProductItems = async ({lineItems}) => {
     const products = [];
     let subTotal = 0;
 
@@ -300,5 +282,7 @@ const getOrderProductItems = async ({ lineItems }) => {
         }
     }
 
-    return { products, subTotal };
+    return {products, subTotal};
 };
+
+export default new OrderController();

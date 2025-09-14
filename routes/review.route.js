@@ -1,19 +1,19 @@
 import {Router} from 'express'
 import authMiddleware from "../middleware/auth.middleware.js";
-import { ReviewController } from '../controllers/review.controller.js';
 
 export class ReviewRoutes {
-    constructor() {
+    constructor(controller) {
+        this.controller = controller
         this.router = Router()
         this.registerRoutes()
     }
 
     registerRoutes() {
         this.router.use(authMiddleware);
-        this.router.get("/get", ReviewController.get)
-        this.router.post('/create', ReviewController.create)
-        this.router.put('/update', ReviewController.update)
-        this.router.delete("/delete", ReviewController.delete)
+        this.router.get("/get", this.controller.get.bind(this.controller));
+        this.router.post('/create', this.controller.create.bind(this.controller));
+        this.router.put('/update', this.controller.update.bind(this.controller));
+        this.router.delete("/delete", this.controller.delete.bind(this.controller));
     }
 
     getRouter() {

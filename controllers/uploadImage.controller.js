@@ -1,32 +1,23 @@
 import {saveImage} from "../middleware/upload.middleware.js";
+import {BaseController} from "./base.controller.js";
 
-export class UploadController {
+class UploadController extends BaseController {
     static async image(req, res) {
         const file = req.file
 
         try {
             if (!file) {
-                return res.status(400).json({
-                    success: false,
-                    message: "No file uploaded",
-                });
+                return this.error(res, 'no file uploaded', 400);
             }
 
             const imagePath = await saveImage(file);
 
-            return res.json({
-                success: true,
-                data: {
-                    url: imagePath
-                },
-                message: "Upload done"
-            })
+            return this.success(res, {url: imagePath});
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 }
+
+export default new UploadController();

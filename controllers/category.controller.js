@@ -1,7 +1,8 @@
 import CategoryModel from "../models/category.model.js";
 import ProductModel from "../models/product.model.js";
+import {BaseController} from "./base.controller.js";
 
-export class CategoryController {
+class CategoryController extends BaseController {
     static async get(req, res) {
         try {
             const data = await CategoryModel.aggregate([
@@ -52,67 +53,54 @@ export class CategoryController {
                 }
             ]);
 
-            return res.json({
-                success: true,
-                data: data,
-                message: ''
-            })
+            return this.success(res, data)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
     static async create(req, res) {
         try {
-            const {title, image, parent} = req.body
+            const {title, description, color, icon, image, parent} = req.body
 
             const addCategory = new CategoryModel({
                 title,
+                description,
+                color,
+                icon,
                 image,
                 parent,
             })
 
             await addCategory.save()
 
-            return res.json({
-                success: true,
-                message: ''
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
     static async update(req, res) {
         try {
-            const {_id, title, image, parent} = req.body
+            const {_id, title, description, color, icon, image, parent} = req.body
 
-            const update = await CategoryModel.updateOne({
+            await CategoryModel.updateOne({
                 _id: _id
             }, {
                 title,
+                description,
+                color,
+                icon,
                 image,
                 parent,
             })
 
-            return res.json({
-                success: true,
-                message: ''
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 
@@ -133,16 +121,12 @@ export class CategoryController {
 
             await CategoryModel.deleteOne({_id: _id})
 
-            return res.json({
-                success: true,
-                message: ''
-            })
+            return this.success(res)
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res)
         }
     }
 }
+
+export default new CategoryController();

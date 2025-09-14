@@ -1,7 +1,8 @@
 import UserModel from "../models/user.model.js";
 import CartModel from "../models/cart.model.js";
+import {BaseController} from "./base.controller.js";
 
-export class CartController {
+class CartController extends BaseController {
     static async get(req, res) {
         try {
             const userId = req.userId
@@ -17,17 +18,10 @@ export class CartController {
                     }
                 })
 
-            return res.json({
-                success: true,
-                data: cartItem,
-                message: '',
-            })
+            return this.success(res, cartItem);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -37,10 +31,7 @@ export class CartController {
             const {productId} = req.body
 
             if (!productId) {
-                return res.status(402).json({
-                    message: "Provide productId",
-                    success: false
-                })
+                return this.error(res, 'product?', 402);
             }
 
             const checkItemCart = await CartModel.findOne({
@@ -49,10 +40,7 @@ export class CartController {
             })
 
             if (checkItemCart) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Item already in cart"
-                })
+                return this.error(res, 'item already in cart', 400);
             }
 
             const cartItem = new CartModel({
@@ -69,16 +57,10 @@ export class CartController {
                 }
             })
 
-            return res.json({
-                success: true,
-                message: "Item add successfully",
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -88,24 +70,15 @@ export class CartController {
             const {_id, qty} = req.body
 
             if (!_id || !qty) {
-                return res.status(400).json({
-                    success: false,
-                    message: "provide _id, qty"
-                })
+                return this.error(res, 'product? qty?', 400);
             }
 
             await CartModel.updateOne({_id: _id, userId: userId}, {quantity: qty})
 
-            return res.json({
-                success: true,
-                message: "Update cart",
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 
@@ -115,10 +88,7 @@ export class CartController {
             const {_id} = req.body
 
             if (!_id) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Provide _id",
-                })
+                return this.error(res, 'product?', 400);
             }
 
             await CartModel.deleteOne({_id: _id, userId: userId})
@@ -127,16 +97,12 @@ export class CartController {
                 $pull: {shoppingCart: _id}
             });
 
-            return res.json({
-                success: true,
-                message: "Item remove",
-            })
+            return this.success(res);
         } catch (e) {
             console.log(e);
-            res.status(500).json({
-                success: false,
-                message: "Some error occurred",
-            });
+            return this.error(res);
         }
     }
 }
+
+export default new CartController();
